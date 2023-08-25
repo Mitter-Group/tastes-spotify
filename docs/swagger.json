@@ -1,0 +1,58 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Go template API - Example for swagger",
+        "title": "Go template",
+        "contact": {
+            "name": "Your team",
+            "email": "your-team@taste.la"
+        },
+        "version": "1.0"
+    },
+    "host": "go-template.dev.taste.la",
+    "basePath": "/",
+    "paths": {
+        "/liveness": {
+            "get": {
+                "description": "return 200 if the service its alive",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Healthcheck"
+                ],
+                "summary": "Liveness endpoint",
+                "operationId": "get-string-by-int",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/tokeninfo": {
+            "get": {
+                "description": "return info of the given token",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "TokenInfo"
+                ],
+                "summary": "TokenInfo endpoint",
+                "operationId": "get-token-info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

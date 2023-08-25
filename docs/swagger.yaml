@@ -1,0 +1,39 @@
+basePath: /
+host: go-template.dev.taste.la
+info:
+  contact:
+    email: your-team@taste.la
+    name: Your team
+  description: Go template API - Example for swagger
+  title: Go template
+  version: "1.0"
+paths:
+  /liveness:
+    get:
+      description: return 200 if the service its alive
+      operationId: get-string-by-int
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Liveness endpoint
+      tags:
+      - Healthcheck
+  /tokeninfo:
+    get:
+      description: return info of the given token
+      operationId: get-token-info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: TokenInfo endpoint
+      tags:
+      - TokenInfo
+swagger: "2.0"

@@ -1,0 +1,10 @@
+{
+  "oauth_example": {
+    "domain": "taste-develop.us.auth0.com",
+    "audience": "https://auth-dev-internal.taste.la",
+    "client_id": "xxx",
+	  "client_secret_key": "ENV_SECRET_KEY",
+    "token_url": "https://taste-develop.us.auth0.com/oauth/token",
+    "scope": ""
+  }
+}

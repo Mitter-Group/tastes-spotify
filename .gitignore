@@ -1,0 +1,38 @@
+# Archivos y directorios de IDEs
+.idea/*
+.vscode/launch.json
+.commit
+launch.json
+
+# Archivos de compilación y depuración
+cmd/api/__debug_bin
+
+# Archivos de cobertura y lint
+coverage.json
+coverage.out
+golangci-lint.out
+cover.out
+
+# Archivos de estado local de Terraform
+*.tfstate
+*.tfstate.*
+
+# Archivos de bloqueo de Terraform
+.terraform.lock.hcl
+
+# Directorio .terraform/
+.terraform/
+
+# Carpetas de módulos y plugins de Terraform
+modules/
+darwin_arm64/
+
+# Archivos de backup
+*.backup
+
+# Archivos temporales y otros archivos del sistema
+*.swp
+*.bak
+*~
+*.tmp
+.DS_Store
