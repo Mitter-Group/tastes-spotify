@@ -12,7 +12,7 @@ const docTemplate = `{
         "title": "{{.Title}}",
         "contact": {
             "name": "Your team",
-            "email": "your-team@taste.la"
+            "email": "your-team@geo.la"
         },
         "version": "{{.Version}}"
     },
@@ -67,7 +67,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "go-template.dev.taste.la",
+	Host:             "go-template.dev.geo.la",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Go template",

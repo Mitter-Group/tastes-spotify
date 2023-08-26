@@ -3,7 +3,7 @@ package tastes
 import (
 	"context"
 
-	"github.com/chunnior/tastes/internal/models"
+	"github.com/chunnior/geo/internal/models"
 )
 
 type UseCase interface {

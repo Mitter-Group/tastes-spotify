@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"math/big"
 
-	"github.com/chunnior/tastes/internal/models"
+	"github.com/chunnior/geo/internal/models"
 )
 
 type Implementation struct {

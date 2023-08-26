@@ -1,4 +1,4 @@
-# Tastes
+# Geo
 
 
 ### Install required dependencies and tools
@@ -34,144 +34,166 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 govulncheck ./...
 ```
 
+## Endpoints:
 
-# SolucionDynamo4: Diseño de Tabla de DynamoDB para Preferencias Musicales y Cinematográficas
+### 1. Guardar Ubicación de Usuario:
+- **URL**: `/location`
+- **Method**: `POST`
+- **Descripción**:  
+Este endpoint permite guardar la ubicación actual del usuario, pero en lugar de guardar la latitud y longitud exactas, mapea esas coordenadas a una zona específica, como un barrio, ciudad o punto de interés.
+  
+- **Parámetros**:  
+  - **userID**: Identificador del usuario.
+  - **lat**: Latitud actual del usuario.
+  - **long**: Longitud actual del usuario.
 
-## Descripción:
-Este diseño tiene como objetivo almacenar y consultar las preferencias musicales y cinematográficas de los usuarios. La estructura se basa en dos tablas principales: `UserTastes` y `tastesTags`.
+- **Respuesta**:  
+Un mensaje de confirmación si la ubicación fue guardada con éxito, o un mensaje de error en caso contrario.
 
-## Tabla: UserTastes
+### 2. Buscar Usuarios Cercanos con Gustos Similares:
+- **URL**: `/location/nearbies`
+- **Method**: `GET`
+- **Descripción**:  
+Este endpoint permite encontrar usuarios que se encuentren en la misma zona y que tengan gustos similares basados en un filtro proporcionado. Primero, filtra a los usuarios que están en la misma zona, y luego consulta a otro servicio (Tastes) para verificar si tienen gustos similares según el filtro proporcionado.
 
-### Atributos:
+- **Parámetros**:  
+  - **userID**: Identificador del usuario.
+  - **lat**: Latitud actual del usuario.
+  - **long**: Longitud actual del usuario.
+  - **filter**: Tipo de filtro a aplicar (por ejemplo, canción más escuchada, género musical, etc.).
 
-- **Partition Key (PK)**: Combinación de `Type`, `Rank`, y `Name`.
- - Ejemplo: `SONG#1#Radioactive` o `GENRE#1#Rock`.
+- **Respuesta**:  
+Una lista de usuarios cercanos que cumplen con el criterio de búsqueda.
 
-- **Sort Key (SK)**: `UserID`
-  - Descripción: Identificador único para cada usuario.
+## Diseño de Tablas PostgreSQL con Amazon RDS:
 
-- **Type**:
-  - Descripción: Tipo de preferencia (ej. musical, cinematográfica).
-  - Ejemplo: 'ARTIST', 'GENRE', 'SONG', 'MOVIE'.
+### Tabla: ZonesConfig
+- **Atributos**:
+  - **ZoneID** (PK): Identificador único para cada zona.
+  - **ZoneName**: Nombre de la zona o punto de interés.
+  - **ZoneType**: Tipo de la zona (ej., country, POI, neighborhood, city).
+  - **created_at**: Fecha de creación del registro.
+  - **updated_at**: Fecha de la última actualización del registro.
 
-- **Rank**:
-  - Descripción: Número que representa el rango de preferencia.
-  - Ejemplo: 1, 2, 3...
+**Ejemplo**:  
+| ZoneID | ZoneName            | ZoneType    |
+|--------|---------------------|-------------|
+| Z001   | New York City       | city        |
+| Z002   | Central Park        | POI         |
+| Z003   | Brooklyn            | neighborhood|
+| Z004   | Los Angeles         | city        |
+| Z005   | Hollywood           | POI         |
+| Z006   | Santa Monica        | neighborhood|
+| Z007   | Buenos Aires        | city        |
+| Z008   | River Plate Stadium | POI         |
+| Z009   | Villa Crespo        | neighborhood|
+| Z010   | Tokyo               | city        |
 
-- **Name**:
-  - Descripción: El nombre del artista, género, canción o película.
-  - Ejemplo: "Imagine Dragons", "Rock", "Radioactive", "Inception".
+### Tabla: UserZones
+- **Atributos**:
+  - **ZoneID** (PK): Identificador único para cada zona.
+  - **UserID** (SK): Identificador único para cada usuario.
+  - **Timestamp**: Fecha y hora exactas en que se guardó la zona para el usuario.
+  - **created_at**: Fecha de creación del registro.
+  - **updated_at**: Fecha de la última actualización del registro.
 
-- **TagID**:
-  - Descripción: Referencia al ID en `tastesTags` que indica cómo y de dónde se obtuvo esta preferencia.
-  - Ejemplo: "1" (que podría corresponder a Spotify).
+**Ejemplo**:  
+| ZoneID | UserID  | Timestamp               | createdAt              | updatedAt              |
+|--------|---------|-------------------------|------------------------|------------------------|
+| Z001   | U1001   | 2023-08-25 08:00:00     | 2023-08-25 08:00:00    | 2023-08-25 08:00:00    |
+| Z002   | U1002   | 2023-08-25 09:15:00     | 2023-08-25 09:15:00    | 2023-08-25 09:15:00    |
+| Z003   | U1003   | 2023-08-25 10:30:00     | 2023-08-25 10:30:00    | 2023-08-25 10:30:00    |
+| Z004   | U1004   | 2023-08-25 11:45:00     | 2023-08-25 11:45:00    | 2023-08-25 11:45:00    |
+| Z005   | U1005   | 2023-08-25 12:00:00     | 2023-08-25 12:00:00    | 2023-08-25 12:00:00    |
+| Z006   | U1006   | 2023-08-25 13:15:00     | 2023-08-25 13:15:00    | 2023-08-25 13:15:00    |
+| Z007   | U1007   | 2023-08-25 14:30:00     | 2023-08-25 14:30:00    | 2023-08-25 14:30:00    |
+| Z008   | U1008   | 2023-08-25 15:45:00     | 2023-08-25 15:45:00    | 2023-08-25 15:45:00    |
+| Z009   | U1009   | 2023-08-25 16:00:00     | 2023-08-25 16:00:00    | 2023-08-25 16:00:00    |
+| Z010   | U1010   | 2023-08-25 17:15:00     | 2023-08-25 17:15:00    | 2023-08-25 17:15:00    |
 
-- **created_at**:
-  - Descripción: Fecha de creación del registro.
+**Nota:** se tiene que considerar cual es el mejor metodo para almacenar zonas y realizar las busquedas mas eficientes, algunos metodos que podmos considerar son:
+- Utilizar PostGIS con PostgreSQL
+- Utilizar un servicio geoespacial externo
+- Método de "ray casting" o "point-in-polygon"
+- Método de cuadros delimitadores (bounding boxes)
 
-- **updated_at**:
-  - Descripción: Fecha de última actualización del registro.
+Segun el metodo elegido se cambiara el diseño de la tabla.
 
-### Nota sobre `last_accessed_at`:
-No se recomienda agregar esta columna directamente en la tabla. Si se desea rastrear el último acceso de un usuario, debe ser gestionado a través de logs.
+### Tabla: UserLocationHistory
+Guardara el historial de ubicaciones de los usuarios. Solo cuando cambie de ZoneID se guardara un nuevo registro. (trigger)
+- **Atributos**:
+  - **UserID** (PK): Identificador único para cada usuario.
+  - **Timestamp** (SK): Fecha y hora exactas en que se guardó la zona para el usuario.
+  - **ZoneID**: Identificador único para cada zona tomado de la tabla `ZonesConfig`.
+  - **created_at**: Fecha de creación del registro.
+  - **updated_at**: Fecha de la última actualización del registro.
 
-### Ejemplos de Entradas:
+**Ejemplo**:  
+| UserID | Timestamp               | ZoneID |
+|--------|-------------------------|--------|
+| U1001  | 2023-08-25 08:00:00     | Z001   |
+| U1002  | 2023-08-25 09:15:00     | Z002   |
+| U1003  | 2023-08-25 10:30:00     | Z003   |
+| U1004  | 2023-08-25 11:45:00     | Z004   |
+| U1005  | 2023-08-25 12:00:00     | Z005   |
+| U1006  | 2023-08-25 13:15:00     | Z006   |
+| U1007  | 2023-08-25 14:30:00     | Z007   |
+| U1008  | 2023-08-25 15:45:00     | Z008   |
+| U1009  | 2023-08-25 16:00:00     | Z009   |
+| U1010  | 2023-08-25 17:15:00     | Z010   |
+## CREATE TABLE (pseudo-code):
 
-| PK                        | SK         | Type  | Rank | Name                 | TagID | created_at | updated_at |
-|---------------------------|------------|-------|------|----------------------|-------|------------|------------|
-| SONG#1#unforgiven        | Sebas      | SONG  | 1    | Radioactive          | 1     | 2023-01-01 | 2023-01-01 |
-| GENRE#1#Rock              | Joselin    | GENRE | 1    | Rock                 | 4     | 2023-01-01 | 2023-01-01 |
-| MOVIE#1#Inception         | Maria      | MOVIE | 1    | Inception            | 5     | 2023-01-01 | 2023-01-01 |
-| SONG#1#Radioactive        | Junior     | SONG  | 1    | Radioactive          | 1     | 2023-01-01 | 2023-01-01 |
-| ARTIST#1#ImagineDragons   | Sebas      | ARTIST| 1    | Imagine Dragons      | 1     | 2023-01-02 | 2023-01-02 |
-| SONG#2#Demons             | Sebas      | SONG  | 2    | Demons               | 1     | 2023-01-03 | 2023-01-03 |
-| MOVIE#2#Interstellar      | Maria      | MOVIE | 2    | Interstellar         | 5     | 2023-01-04 | 2023-01-04 |
-| GENRE#2#Pop               | Joselin    | GENRE | 2    | Pop                  | 4     | 2023-01-05 | 2023-01-05 |
-| SONG#3#Thunder            | Junior     | SONG  | 3    | Thunder              | 1     | 2023-01-06 | 2023-01-06 |
-| MOVIE#3#DarkKnight        | Maria      | MOVIE | 3    | The Dark Knight      | 5     | 2023-01-07 | 2023-01-07 |
-| ARTIST#2#Coldplay         | Junior     | ARTIST| 2    | Coldplay             | 2     | 2023-01-08 | 2023-01-08 |
-| GENRE#3#Jazz              | Sebas      | GENRE | 3    | Jazz                 | 3     | 2023-01-09 | 2023-01-09 |
+```sql
+CREATE TABLE ZonesConfig (
+    ZoneID UUID PRIMARY KEY,
+    ZoneName VARCHAR(255) NOT NULL,
+    ZoneType VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 
+CREATE TABLE UserZones (
+    ZoneID UUID REFERENCES ZonesConfig(ZoneID),
+    UserID UUID NOT NULL,
+    Timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (ZoneID, UserID)
+);
 
-### Índice Secundario Global para UserTastes
+CREATE TABLE UserLocationHistory (
+    UserID UUID NOT NULL,
+    Timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    ZoneID UUID REFERENCES ZonesConfig(ZoneID),
+    PRIMARY KEY (UserID, Timestamp)
+);
 
-#### Recomendación: 
+CREATE OR REPLACE FUNCTION insert_into_userlocationhistory_on_zoneid_change()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Inserta un nuevo registro en UserLocationHistory solo si el ZoneID ha cambiado
+    IF NEW.ZoneID <> OLD.ZoneID THEN
+        INSERT INTO UserLocationHistory (UserID, Timestamp, ZoneID)
+        VALUES (NEW.UserID, CURRENT_TIMESTAMP, OLD.ZoneID);
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-Para facilitar consultas que buscan recuperar todos los gustos de un usuario específico, recomendamos agregar un Índice Secundario Global (GSI) en la tabla `UserTastes` utilizando `UserID` como la clave principal.
+CREATE TRIGGER tr_insert_into_userlocationhistory
+AFTER UPDATE OF ZoneID ON UserZones
+FOR EACH ROW
+WHEN (OLD.ZoneID IS DISTINCT FROM NEW.ZoneID)
+EXECUTE FUNCTION insert_into_userlocationhistory_on_zoneid_change();
 
-#### Especificaciones:
+```
 
-- **Nombre del GSI**: `UserIDIndex`
-- **Clave Principal (PK) del GSI**: `UserID` (anteriormente SK en la tabla principal)
-- **Clave de Ordenación (SK) del GSI**: `PK` de la tabla principal (combinación de `Type`, `Rank`, y `Name`).
+**Nota**: Hay que tener en cuenta que el uso intensivo de triggers puede afectar el rendimiento. Deberemos monitorear el rendimiento y buscar una solucion mejor si es necesario.
 
-#### Beneficios:
+### Pendientes:
 
-- Permitirá consultas eficientes para recuperar todos los gustos de un usuario específico sin tener que especificar el tipo o rango.
-- Facilita el análisis de los gustos individuales de los usuarios.
+**Seguridad**: Asegurar que la información de ubicación esté segura, y considera cualquier regulación o ley de privacidad aplicable. 
 
-#### Ejemplo de Uso:
+**REDIS**: Analizar si es necesario utilizar REDIS para guardar la información de ubicación de los usuarios.
 
-Si deseas obtener todos los gustos del usuario "Sebas", simplemente realizarías una consulta en el `UserIDIndex` con `UserID = Sebas`.
-
-
-## DynamoDB Streams para Historial de Cambios de Gustos
-
-### Implementación:
-
-1. **Habilitar DynamoDB Streams en la tabla `UserTastes`**:
-    - Ve a la sección "DynamoDB Streams" en la configuración de la tabla.
-    - Activa la opción y selecciona "Only capture modifications".
-
-2. **Configurar AWS Lambda**:
-    - Crea una nueva función Lambda.
-    - Configura un disparador ("trigger") para esta función, seleccionando el stream de DynamoDB que acabas de crear.
-    - Implementa el código de la función para procesar los cambios y almacenarlos en una tabla de backup o histórico.
-
-3. **Tabla de Backup o Histórico `UserTastesHistory`**:
-
-| PK                  | SK    | Type  | Rank | Name          | TagID | created_at | updated_at | ChangeDate          |
-|---------------------|-------|-------|------|---------------|-------|------------|------------|---------------------|
-| SONG#Radioactive    | Sebas | SONG  | 1    | Radioactive   | 1     | 2023-01-01 | 2023-05-01 | 2023-05-01 15:23:00 |
-| GENRE#Rock          | Joselin | GENRE | 1    | Rock         | 4     | 2023-01-01 | 2023-06-10 | 2023-06-10 10:10:10 |
-
-Nota: El campo `ChangeDate` representa la fecha y hora exacta del cambio registrado en la tabla principal.
-
-
----
-
-## Tabla: tastesTags
-
-### Atributos:
-
-- **PK**: Identificador único para cada etiqueta.
-- **Config**: Formato de la etiqueta. Ejemplo: `SONG#RANK#SONGID`.
-- **DESCRIP**: Descripción breve de la etiqueta.
-- **created_at**: Fecha de creación de la entrada.
-- **version**: Versión de la etiqueta.
-- **updated_at**: Fecha de última actualización.
-- **status**: Estado de la etiqueta (activo, inactivo, obsoleto).
-- **long_description**: Descripción detallada de la etiqueta.
-- **IntegrationRef**: Identificador de la plataforma o integración de donde proviene la información (ej. Spotify, IMDB).
-
-### Ejemplos de Entradas:
-
-| PK | Config                | DESCRIP                                | created_at | version | updated_at | status | long_description                             | IntegrationRef | pricing  |
-|----|-----------------------|----------------------------------------|------------|---------|------------|--------|----------------------------------------------|----------------|-----------|
-| 1  | SONG#1#SONGID         | Favorite song rank 1                   | 2023-01-01 | 1.0     | 2023-01-01 | active | Rank of favorite song for each user.        | Spotify        | FREE      |
-| 2  | SONG#2#SONGID         | Favorite song rank 2                   | 2023-01-01 | 1.0     | 2023-01-01 | active | Rank of 2 favorite songs for each user.     | Spotify        | PREMIUM   |
-| 3  | SONG#3#SONGID         | Favorite song rank 3                   | 2023-01-01 | 1.0     | 2023-01-01 | active | Rank of 3 favorite songs for each user.     | Spotify        | PREMIUM   |
-| 4  | GENRE#RANK#RANKID     | Genre                                  | 2023-01-01 | 1.0     | 2023-01-01 | active | Preferred genre rank for users.              | YouTubeMusic   | FREE      |
-| 5  | MOVIE#RANK#MOVIEID    | Favorite movie rank                    | 2023-01-01 | 1.0     | 2023-01-01 | active | Rank of favorite movies for users.           | IMDB           | FREE      |
-| 5  | FOLLOW#-#ArtistID    | Favorite movie rank                    | 2023-01-01 | 1.0     | 2023-01-01 | active | Rank of favorite movies for users.           | IMDB           | FREE      |
----
-
-## consideraciones para la tabla tastesTags:
-
-
-1. **Status**: Añade un atributo de `status` para gestionar la activación de etiquetas.
-2. **Automatización**: Automatiza la adición de nuevas entradas si sigue un patrón.
-3. **Validación**: Implementa validaciones al añadir o modificar entradas.
-
----
-
+**Encriptar**??: datos sensibles como las coordenadas de ubicación, estén encriptados???

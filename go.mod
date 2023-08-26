@@ -1,4 +1,4 @@
-module github.com/chunnior/tastes
+module github.com/chunnior/geo
 
 go 1.19
 

@@ -1,9 +1,9 @@
 {
   "oauth_example": {
-    "domain": "taste-prod.us.auth0.com",
-    "audience": "https://auth-prod-internal.taste.la",
+    "domain": "geo-prod.us.auth0.com",
+    "audience": "https://auth-prod-internal.geo.la",
     "client_id": "xxxx",
     "client_secret_key": "ENV_SECRET_KEY",
-    "token_url": "https://taste-develop.us.auth0.com/oauth/token"
+    "token_url": "https://geo-develop.us.auth0.com/oauth/token"
   }
 }

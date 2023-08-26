@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/chunnior/tastes/internal/entity"
-	"github.com/chunnior/tastes/internal/util/log"
+	"github.com/chunnior/geo/internal/entity"
+	"github.com/chunnior/geo/internal/util/log"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )

@@ -5,11 +5,11 @@
         "title": "Go template",
         "contact": {
             "name": "Your team",
-            "email": "your-team@taste.la"
+            "email": "your-team@geo.la"
         },
         "version": "1.0"
     },
-    "host": "go-template.dev.taste.la",
+    "host": "go-template.dev.geo.la",
     "basePath": "/",
     "paths": {
         "/liveness": {
