@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/chunnior/geo/internal/entity"
-	"github.com/chunnior/geo/internal/util/log"
+	"github.com/chunnior/spotify/internal/entity"
+	"github.com/chunnior/spotify/internal/util/log"
 )
 
 func ReadConfig(env string) (*entity.Config, error) {

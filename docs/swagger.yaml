@@ -1,8 +1,8 @@
 basePath: /
-host: go-template.dev.geo.la
+host: go-template.dev.taste.la
 info:
   contact:
-    email: your-team@geo.la
+    email: your-team@taste.la
     name: Your team
   description: Go template API - Example for swagger
   title: Go template

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/chunnior/geo/internal/util/log"
+	"github.com/chunnior/spotify/internal/util/log"
 	"github.com/tidwall/gjson"
 )
 

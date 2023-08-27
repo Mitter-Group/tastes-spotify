@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/chunnior/geo/internal/models"
-	"github.com/chunnior/geo/internal/usecase/tastes"
-	"github.com/chunnior/geo/internal/util/log"
-	"github.com/chunnior/geo/internal/util/tracing"
+	"github.com/chunnior/spotify/internal/models"
+	"github.com/chunnior/spotify/internal/usecase/tastes"
+	"github.com/chunnior/spotify/internal/util/log"
+	"github.com/chunnior/spotify/internal/util/tracing"
 	"github.com/gofiber/fiber/v2"
 )
 

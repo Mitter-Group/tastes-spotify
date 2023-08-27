@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/newrelic/go-agent/v3/newrelic"
 
-	"github.com/chunnior/geo/internal/util/log"
+	"github.com/chunnior/spotify/internal/util/log"
 )
 
 func InitializeNewRelicProvider() *newrelic.Application {

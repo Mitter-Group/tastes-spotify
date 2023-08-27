@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"math/big"
 
-	"github.com/chunnior/geo/internal/models"
+	"github.com/chunnior/spotify/internal/models"
 )
 
 type Implementation struct {

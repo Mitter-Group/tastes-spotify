@@ -1,4 +1,4 @@
-module github.com/chunnior/geo
+module github.com/chunnior/spotify
 
 go 1.19
 

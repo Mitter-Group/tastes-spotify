@@ -5,11 +5,11 @@
         "title": "Go template",
         "contact": {
             "name": "Your team",
-            "email": "your-team@geo.la"
+            "email": "your-team@spotify.la"
         },
         "version": "1.0"
     },
-    "host": "go-template.dev.geo.la",
+    "host": "go-template.dev.spotify.la",
     "basePath": "/",
     "paths": {
         "/liveness": {

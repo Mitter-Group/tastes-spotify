@@ -1,4 +1,4 @@
-# Geo
+# Spotify
 
 
 ### Install required dependencies and tools
@@ -34,166 +34,102 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 govulncheck ./...
 ```
 
-## Endpoints:
 
-### 1. Guardar Ubicación de Usuario:
-- **URL**: `/location`
-- **Method**: `POST`
-- **Descripción**:  
-Este endpoint permite guardar la ubicación actual del usuario, pero en lugar de guardar la latitud y longitud exactas, mapea esas coordenadas a una zona específica, como un barrio, ciudad o punto de interés.
+---
+
+#### 1. Descripción 
+
+Se conectará con Spotify para obtener datos musicales de los usuarios, como sus canciones recientes, artistas top, géneros. Con esta info analizaremos los gustos musicales del usuario a lo largo del tiempo.
+
+Usaremos el API de Spotify:
+https://developer.spotify.com/documentation/web-api
+
+---
+#### 2. Endpoints
+
+##### Autenticación
+- **/api/spotify/auth/start (GET)**
+  - **Descripción**: Inicia el proceso de autenticación con Spotify, redirigiendo al usuario a la página de autenticación.
+  - **Recibe**: N/A
+  - **Devuelve**: Redirección a la página de autenticación de Spotify.
+  - **Ejemplo**: `GET /api/spotify/auth/start`
+
+- **/api/spotify/auth/callback (GET)**
+  - **Descripción**: Endpoint al que Spotify redirige tras la autenticación. Aquí se procesan y almacenan los tokens.
+  - **Recibe**: `code` (Código de autorización de Spotify).
+  - **Devuelve**: Confirmación del estado de autenticación y posible token de acceso.
+  - **Ejemplo**: `GET /api/spotify/auth/callback?code=ABC123`
+
+- **/api/spotify/auth/refresh (POST)**
+  - **Descripción**: Refresca el token de acceso utilizando el token de actualización.
+  - **Recibe**: `userID`
+  - **Devuelve**: Nuevo `accessToken`.
+  - **Ejemplo**: `POST /api/spotify/auth/refresh { "userID": "user123" }`
+
+##### Datos
+- **/api/spotify/data/tracks (GET)**
+  - **Descripción**: Obtiene las pistas más recientes o favoritas del usuario.
+  - **Recibe**: `userID`
+  - **Devuelve**: Lista de pistas.
+  - **Ejemplo**: `GET /api/spotify/data/tracks?userID=user123`
   
-- **Parámetros**:  
-  - **userID**: Identificador del usuario.
-  - **lat**: Latitud actual del usuario.
-  - **long**: Longitud actual del usuario.
+- **/api/spotify/data/artists (GET)**
+  - **Descripción**: Obtiene los artistas top del usuario.
+  - **Recibe**: `userID`
+  - **Devuelve**: Lista de artistas.
+  - **Ejemplo**: `GET /api/spotify/data/artists?userID=user123`
 
-- **Respuesta**:  
-Un mensaje de confirmación si la ubicación fue guardada con éxito, o un mensaje de error en caso contrario.
+- **/api/spotify/data/genres (GET)**
+  - **Descripción**: Obtiene los géneros favoritos o más escuchados por el usuario.
+  - **Recibe**: `userID`
+  - **Devuelve**: Lista de géneros.
+  - **Ejemplo**: `GET /api/spotify/data/genres?userID=user123`
 
-### 2. Buscar Usuarios Cercanos con Gustos Similares:
-- **URL**: `/location/nearbies`
-- **Method**: `GET`
-- **Descripción**:  
-Este endpoint permite encontrar usuarios que se encuentren en la misma zona y que tengan gustos similares basados en un filtro proporcionado. Primero, filtra a los usuarios que están en la misma zona, y luego consulta a otro servicio (Tastes) para verificar si tienen gustos similares según el filtro proporcionado.
+- **/api/spotify/data/playlists (GET)**
+  - **Descripción**: Obtiene las listas de reproducción del usuario.
+  - **Recibe**: `userID`
+  - **Devuelve**: Lista de listas de reproducción.
+  - **Ejemplo**: `GET /api/spotify/data/playlists?userID=user123`
 
-- **Parámetros**:  
-  - **userID**: Identificador del usuario.
-  - **lat**: Latitud actual del usuario.
-  - **long**: Longitud actual del usuario.
-  - **filter**: Tipo de filtro a aplicar (por ejemplo, canción más escuchada, género musical, etc.).
+Spotify solo permite consulta TOP tracks y artist, debemos calcular de nuestro lado TOP tracks.
 
-- **Respuesta**:  
-Una lista de usuarios cercanos que cumplen con el criterio de búsqueda.
+_Para analizar: solo podemos consultar las últimas 50 canciones, si queremos un historial más específico debemos guardar los datos en nuestra base de datos y refrescarlos cada cierto tiempo. Tomar en cuenta la quota de Spotify._
 
-## Diseño de Tablas PostgreSQL con Amazon RDS:
 
-### Tabla: ZonesConfig
-- **Atributos**:
-  - **ZoneID** (PK): Identificador único para cada zona.
-  - **ZoneName**: Nombre de la zona o punto de interés.
-  - **ZoneType**: Tipo de la zona (ej., country, POI, neighborhood, city).
-  - **created_at**: Fecha de creación del registro.
-  - **updated_at**: Fecha de la última actualización del registro.
+---
 
-**Ejemplo**:  
-| ZoneID | ZoneName            | ZoneType    |
-|--------|---------------------|-------------|
-| Z001   | New York City       | city        |
-| Z002   | Central Park        | POI         |
-| Z003   | Brooklyn            | neighborhood|
-| Z004   | Los Angeles         | city        |
-| Z005   | Hollywood           | POI         |
-| Z006   | Santa Monica        | neighborhood|
-| Z007   | Buenos Aires        | city        |
-| Z008   | River Plate Stadium | POI         |
-| Z009   | Villa Crespo        | neighborhood|
-| Z010   | Tokyo               | city        |
+#### 3. Diseño de las Tablas
 
-### Tabla: UserZones
-- **Atributos**:
-  - **ZoneID** (PK): Identificador único para cada zona.
-  - **UserID** (SK): Identificador único para cada usuario.
-  - **Timestamp**: Fecha y hora exactas en que se guardó la zona para el usuario.
-  - **created_at**: Fecha de creación del registro.
-  - **updated_at**: Fecha de la última actualización del registro.
 
-**Ejemplo**:  
-| ZoneID | UserID  | Timestamp               | createdAt              | updatedAt              |
-|--------|---------|-------------------------|------------------------|------------------------|
-| Z001   | U1001   | 2023-08-25 08:00:00     | 2023-08-25 08:00:00    | 2023-08-25 08:00:00    |
-| Z002   | U1002   | 2023-08-25 09:15:00     | 2023-08-25 09:15:00    | 2023-08-25 09:15:00    |
-| Z003   | U1003   | 2023-08-25 10:30:00     | 2023-08-25 10:30:00    | 2023-08-25 10:30:00    |
-| Z004   | U1004   | 2023-08-25 11:45:00     | 2023-08-25 11:45:00    | 2023-08-25 11:45:00    |
-| Z005   | U1005   | 2023-08-25 12:00:00     | 2023-08-25 12:00:00    | 2023-08-25 12:00:00    |
-| Z006   | U1006   | 2023-08-25 13:15:00     | 2023-08-25 13:15:00    | 2023-08-25 13:15:00    |
-| Z007   | U1007   | 2023-08-25 14:30:00     | 2023-08-25 14:30:00    | 2023-08-25 14:30:00    |
-| Z008   | U1008   | 2023-08-25 15:45:00     | 2023-08-25 15:45:00    | 2023-08-25 15:45:00    |
-| Z009   | U1009   | 2023-08-25 16:00:00     | 2023-08-25 16:00:00    | 2023-08-25 16:00:00    |
-| Z010   | U1010   | 2023-08-25 17:15:00     | 2023-08-25 17:15:00    | 2023-08-25 17:15:00    |
+- **Tabla de Autenticación (Tokens)**
+  
+  
+  **NOTA**: Esta tabla no la neceistamos en este servicio, debemos pasarla al servicio de usuarios. Investigar cognito.
 
-**Nota:** se tiene que considerar cual es el mejor metodo para almacenar zonas y realizar las busquedas mas eficientes, algunos metodos que podmos considerar son:
-- Utilizar PostGIS con PostgreSQL
-- Utilizar un servicio geoespacial externo
-- Método de "ray casting" o "point-in-polygon"
-- Método de cuadros delimitadores (bounding boxes)
+  - **Descripción**: Almacena la información de autenticación de cada usuario.
+  - **Datos Ejemplo**:
 
-Segun el metodo elegido se cambiara el diseño de la tabla.
+    | userID | accessToken | refreshToken | expirationTime | 
+    |--------|-------------|--------------|----------------|
+    | user1  | tok123      | ref123       | 1677812359     |
+    | user2  | tok456      | ref456       | 1677898759     |
 
-### Tabla: UserLocationHistory
-Guardara el historial de ubicaciones de los usuarios. Solo cuando cambie de ZoneID se guardara un nuevo registro. (trigger)
-- **Atributos**:
-  - **UserID** (PK): Identificador único para cada usuario.
-  - **Timestamp** (SK): Fecha y hora exactas en que se guardó la zona para el usuario.
-  - **ZoneID**: Identificador único para cada zona tomado de la tabla `ZonesConfig`.
-  - **created_at**: Fecha de creación del registro.
-  - **updated_at**: Fecha de la última actualización del registro.
 
-**Ejemplo**:  
-| UserID | Timestamp               | ZoneID |
-|--------|-------------------------|--------|
-| U1001  | 2023-08-25 08:00:00     | Z001   |
-| U1002  | 2023-08-25 09:15:00     | Z002   |
-| U1003  | 2023-08-25 10:30:00     | Z003   |
-| U1004  | 2023-08-25 11:45:00     | Z004   |
-| U1005  | 2023-08-25 12:00:00     | Z005   |
-| U1006  | 2023-08-25 13:15:00     | Z006   |
-| U1007  | 2023-08-25 14:30:00     | Z007   |
-| U1008  | 2023-08-25 15:45:00     | Z008   |
-| U1009  | 2023-08-25 16:00:00     | Z009   |
-| U1010  | 2023-08-25 17:15:00     | Z010   |
-## CREATE TABLE (pseudo-code):
 
-```sql
-CREATE TABLE ZonesConfig (
-    ZoneID UUID PRIMARY KEY,
-    ZoneName VARCHAR(255) NOT NULL,
-    ZoneType VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+- **Tabla UserSpotifyData**
+  - **Descripción**: Almacena la información de Spotify relacionada con el usuario.
+  - **Datos Ejemplo**:
 
-CREATE TABLE UserZones (
-    ZoneID UUID REFERENCES ZonesConfig(ZoneID),
-    UserID UUID NOT NULL,
-    Timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (ZoneID, UserID)
-);
+    | userID | dataType | data                                         | updatedAt              | createdAt              |
+    |--------|----------|----------------------------------------------|------------------------|------------------------|
+    | user1  | tracks   | ["song1", "song2", "song3"]                  | 2023-08-27T15:30:00Z   | 2023-08-26T14:20:00Z   |
+    | user1  | artists  | ["artist1", "artist2"]                       | 2023-08-27T15:45:00Z   | 2023-08-26T14:25:00Z   |
+    | user2  | genres   | ["rock", "pop"]                              | 2023-08-28T16:32:00Z   | 2023-08-27T15:22:00Z   |
 
-CREATE TABLE UserLocationHistory (
-    UserID UUID NOT NULL,
-    Timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
-    ZoneID UUID REFERENCES ZonesConfig(ZoneID),
-    PRIMARY KEY (UserID, Timestamp)
-);
 
-CREATE OR REPLACE FUNCTION insert_into_userlocationhistory_on_zoneid_change()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Inserta un nuevo registro en UserLocationHistory solo si el ZoneID ha cambiado
-    IF NEW.ZoneID <> OLD.ZoneID THEN
-        INSERT INTO UserLocationHistory (UserID, Timestamp, ZoneID)
-        VALUES (NEW.UserID, CURRENT_TIMESTAMP, OLD.ZoneID);
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
 
-CREATE TRIGGER tr_insert_into_userlocationhistory
-AFTER UPDATE OF ZoneID ON UserZones
-FOR EACH ROW
-WHEN (OLD.ZoneID IS DISTINCT FROM NEW.ZoneID)
-EXECUTE FUNCTION insert_into_userlocationhistory_on_zoneid_change();
+---
 
-```
+#### 5. Nota
 
-**Nota**: Hay que tener en cuenta que el uso intensivo de triggers puede afectar el rendimiento. Deberemos monitorear el rendimiento y buscar una solucion mejor si es necesario.
-
-### Pendientes:
-
-**Seguridad**: Asegurar que la información de ubicación esté segura, y considera cualquier regulación o ley de privacidad aplicable. 
-
-**REDIS**: Analizar si es necesario utilizar REDIS para guardar la información de ubicación de los usuarios.
-
-**Encriptar**??: datos sensibles como las coordenadas de ubicación, estén encriptados???
+Este diseño es básicamente para empezar con un MVP. En el futuro, queremos agregar una tabla para guardar cómo cambian los gustos musicales del usuario. Para esto, usaremos streams de DynamoDB que tomaran esos cambios en tiempo real en la tabla de música.

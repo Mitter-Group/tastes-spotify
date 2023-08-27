@@ -4,9 +4,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/newrelic/go-agent/v3/newrelic"
 
-	"github.com/chunnior/geo/internal/entity"
-	"github.com/chunnior/geo/internal/usecase/tastes"
-	"github.com/chunnior/geo/pkg/oauth"
+	"github.com/chunnior/spotify/internal/entity"
+	"github.com/chunnior/spotify/internal/usecase/tastes"
+	"github.com/chunnior/spotify/pkg/oauth"
 )
 
 // @title          Go template

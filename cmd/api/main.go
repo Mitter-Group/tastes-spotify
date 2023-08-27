@@ -4,10 +4,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 
-	"github.com/chunnior/geo/internal/handlers"
-	"github.com/chunnior/geo/internal/handlers/middlewares"
-	"github.com/chunnior/geo/internal/util"
-	"github.com/chunnior/geo/internal/util/log"
+	"github.com/chunnior/spotify/internal/handlers"
+	"github.com/chunnior/spotify/internal/handlers/middlewares"
+	"github.com/chunnior/spotify/internal/util"
+	"github.com/chunnior/spotify/internal/util/log"
 )
 
 func main() {

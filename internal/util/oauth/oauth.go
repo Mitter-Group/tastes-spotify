@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/chunnior/geo/internal/entity"
-	"github.com/chunnior/geo/internal/util/log"
+	"github.com/chunnior/spotify/internal/entity"
+	"github.com/chunnior/spotify/internal/util/log"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
