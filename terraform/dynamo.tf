@@ -1,39 +1,17 @@
-resource "aws_dynamodb_table" "user_tastes" {
-  name           = var.dynamo_user_tastes_table_name
-  billing_mode   = "PAY_PER_REQUEST"
+resource "aws_dynamodb_table" "UserSpotifyData" {
+  name         = var.table_name
+  billing_mode = var.billing_mode
+  hash_key     = var.hash_key
+  range_key    = var.range_key
 
   attribute {
-    name = "PK"
+    name = var.hash_key
     type = "S"
   }
 
   attribute {
-    name = "SK"
+    name = var.range_key
     type = "S"
   }
 
-  hash_key  = "PK"
-  range_key = "SK"
-
-  tags = {
-    Terraform   = "true"
-    Environment = "dev"
-  }
-}
-
-resource "aws_dynamodb_table" "tastes_tags" {
-  name           = var.dynamo_tastes_tags_table_name
-  billing_mode   = "PAY_PER_REQUEST"
-
-  attribute {
-    name = "PK"
-    type = "S"
-  }
-
-  hash_key = "PK"
-
-  tags = {
-    Terraform   = "true"
-    Environment = "dev"
-  }
 }

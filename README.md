@@ -91,7 +91,7 @@ https://developer.spotify.com/documentation/web-api
   - **Devuelve**: Lista de listas de reproducción.
   - **Ejemplo**: `GET /api/spotify/data/playlists?userID=user123`
 
-Spotify solo permite consulta TOP tracks y artist, debemos calcular de nuestro lado TOP tracks.
+Spotify solo permite consulta TOP tracks y artist, debemos calcular de nuestro lado TOP genres.
 
 _Para analizar: solo podemos consultar las últimas 50 canciones, si queremos un historial más específico debemos guardar los datos en nuestra base de datos y refrescarlos cada cierto tiempo. Tomar en cuenta la quota de Spotify._
 
