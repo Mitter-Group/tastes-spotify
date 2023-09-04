@@ -1,4 +1,4 @@
-package tastes
+package spotify
 
 import (
 	"context"
@@ -8,4 +8,5 @@ import (
 
 type UseCase interface {
 	Save(context.Context, models.TasteRequest) (models.Taste, error)
+	Get(context.Context, string, string) (*models.DataResponse, error)
 }

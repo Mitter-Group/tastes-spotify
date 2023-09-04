@@ -35,12 +35,23 @@ variable "eb_version_label" {
   type        = string
 }
 
-variable "dynamo_user_tastes_table_name" {
-  description = "El nombre de la tabla DynamoDB para los gustos del usuario."
+variable "table_name" {
+  description = "Name of the DynamoDB table"
   type        = string
 }
 
-variable "dynamo_tastes_tags_table_name" {
-  description = "El nombre de la tabla DynamoDB para las etiquetas de gustos."
+variable "billing_mode" {
+  description = "Billing mode for the DynamoDB table"
+  type        = string
+  default     = "PAY_PER_REQUEST"
+}
+
+variable "hash_key" {
+  description = "Hash key for the DynamoDB table"
+  type        = string
+}
+
+variable "range_key" {
+  description = "Range key for the DynamoDB table"
   type        = string
 }

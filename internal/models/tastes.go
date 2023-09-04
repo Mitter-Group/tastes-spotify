@@ -8,3 +8,8 @@ type Taste struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
+
+type DataResponse struct {
+	UserId string  `json:"userId"`
+	Data   []Taste `json:"data"`
+}
