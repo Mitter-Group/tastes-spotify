@@ -66,30 +66,29 @@ https://developer.spotify.com/documentation/web-api
   - **Devuelve**: Nuevo `accessToken`.
   - **Ejemplo**: `POST /api/spotify/auth/refresh { "userID": "user123" }`
 
-##### Datos
-- **/api/spotify/data/tracks (GET)**
-  - **Descripción**: Obtiene las pistas más recientes o favoritas del usuario.
-  - **Recibe**: `userID`
-  - **Devuelve**: Lista de pistas.
-  - **Ejemplo**: `GET /api/spotify/data/tracks?userID=user123`
-  
-- **/api/spotify/data/artists (GET)**
-  - **Descripción**: Obtiene los artistas top del usuario.
-  - **Recibe**: `userID`
-  - **Devuelve**: Lista de artistas.
-  - **Ejemplo**: `GET /api/spotify/data/artists?userID=user123`
+#### Datos
 
-- **/api/spotify/data/genres (GET)**
-  - **Descripción**: Obtiene los géneros favoritos o más escuchados por el usuario.
-  - **Recibe**: `userID`
-  - **Devuelve**: Lista de géneros.
-  - **Ejemplo**: `GET /api/spotify/data/genres?userID=user123`
+#### GET /api/data/:dataType/:userId
 
-- **/api/spotify/data/playlists (GET)**
-  - **Descripción**: Obtiene las listas de reproducción del usuario.
-  - **Recibe**: `userID`
-  - **Devuelve**: Lista de listas de reproducción.
-  - **Ejemplo**: `GET /api/spotify/data/playlists?userID=user123`
+##### Descripción
+Obtiene datos diversos (pistas, artistas, géneros, listas de reproducción) del usuario de Spotify.
+
+##### Parámetros
+- `dataType`: Tipo de dato a obtener (tracks, artists, genres, playlists).
+- `userId`: ID del usuario.
+
+##### Respuesta
+Devuelve una lista correspondiente al tipo de dato solicitado.
+
+##### Ejemplos de uso
+1. **Obtener pistas del usuario**
+    - `GET /api/data/tracks/user123`
+2. **Obtener artistas del usuario**
+    - `GET /api/data/artists/user123`
+3. **Obtener géneros del usuario**
+    - `GET /api/data/genres/user123`
+4. **Obtener listas de reproducción del usuario**
+    - `GET /api/data/playlists/user123`
 
 Spotify solo permite consulta TOP tracks y artist, debemos calcular de nuestro lado TOP genres.
 

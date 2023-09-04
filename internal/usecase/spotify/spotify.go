@@ -63,6 +63,7 @@ func (h *Implementation) getTopTracks(userId string) (*models.DataResponse, erro
 				Name: "Track 2",
 			},
 		},
+		Source: "SPOTIFY",
 	}
 
 	return &data, nil
