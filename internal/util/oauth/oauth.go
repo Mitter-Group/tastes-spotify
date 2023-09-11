@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/chunnior/spotify/internal/entity"
+	"github.com/chunnior/spotify/internal/models"
 	"github.com/chunnior/spotify/internal/util/log"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
@@ -20,7 +20,7 @@ type OAuthClient struct {
 	tokenSource     oauth2.TokenSource
 }
 
-func NewOAuthClient(cfg entity.OAuthConfig) *OAuthClient {
+func NewOAuthClient(cfg models.OAuthConfig) *OAuthClient {
 	return &OAuthClient{
 		clientID:        cfg.ClientID,
 		tokenURL:        cfg.TokenURL,
