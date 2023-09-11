@@ -6,5 +6,20 @@
 	  "client_secret_key": "ENV_SECRET_KEY",
     "token_url": "https://spotify-develop.us.auth0.com/oauth/token",
     "scope": ""
+  },
+  "aws":{
+    "localstack_port": "4566",
+    "credentials": {
+      "region": "us-west-1"
+    },
+    "user_spotify_data": {
+      "table_name": "UserSpotifyData",
+      "primary_key_field": "userID",
+      "sort_key_field": "dataType"
+    }
+  },
+  "spotify": {
+    "client_id":"SPOTIFY_CLIENT_ID",
+    "client_secret": "SPOTIFY_SECRET"
   }
 }

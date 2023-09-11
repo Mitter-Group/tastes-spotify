@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/chunnior/spotify/internal/entity"
+	"github.com/chunnior/spotify/internal/models"
 	"github.com/chunnior/spotify/internal/util/log"
 )
 
-func ReadConfig(env string) (*entity.Config, error) {
-	cfg := entity.Config{}
+func ReadConfig(env string) (*models.Config, error) {
+	cfg := models.Config{}
 
 	configFile := readConfigFile(env)
 	jsonParser := json.NewDecoder(configFile)

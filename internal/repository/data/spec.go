@@ -6,7 +6,7 @@ import (
 	"github.com/chunnior/spotify/internal/models"
 )
 
-type UseCase interface {
+type Spec interface {
+	GetData(userId string, dataType string) (*models.Data, error)
 	Save(ctx context.Context, tasteReq models.DataRequest) (models.Data, error)
-	Get(ctx context.Context, dataType string, userId string) (*models.Data, error)
 }

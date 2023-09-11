@@ -1,0 +1,38 @@
+[
+  {
+    "id": "1",
+    "name": "John",
+    "age": "30",
+    "city": "New York",
+    "country": "USA",
+    "email": "",
+    "phone": "1234567890"
+  },
+  {
+    "id": "2",
+    "name": "Peter",
+    "age": "40",
+    "city": "London",
+    "country": "UK",
+    "email": "",
+    "phone": "1234567890"
+  },
+  {
+    "id": "3",
+    "name": "Suzanne",
+    "age": "50",
+    "city": "Paris",
+    "country": "France",
+    "email": "",
+    "phone": "1234567890"
+  },
+  {
+    "id": "3",
+    "name": "Janet",
+    "age": "60",
+    "city": "Tokyo",
+    "country": "Japan",
+    "email": "",
+    "phone": "1234567890"
+  }
+]
