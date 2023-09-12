@@ -11,6 +11,7 @@ type SpotifyAuthConf struct {
 	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
 	TokenURL     string `json:"token_url"`
+	RedirectURI  string `json:"redirect_uri"`
 }
 
 func (s SpotifyAuthConf) GetSpotifyAuthConf() *clientcredentials.Config {

@@ -11,7 +11,7 @@ type Config struct {
 	Version      string          `json:"string"`
 	OAuthExample OAuthConfig     `json:"oauth_example"`
 	AWS          *AWS            `json:"aws"`
-	Spotify      SpotifyAuthConf `json:"spotify"`
+	Spotify      SpotifyAuthConf `json:"spotify_auth_conf"`
 }
 
 type OAuthConfig struct {
