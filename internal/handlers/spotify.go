@@ -10,7 +10,6 @@ import (
 	"github.com/chunnior/spotify/internal/util/log"
 	"github.com/chunnior/spotify/pkg/tracing"
 	"github.com/gofiber/fiber/v2"
-	"github.com/zmb3/spotify/v2"
 )
 
 type Handler struct {
@@ -66,7 +65,7 @@ func (h *Handler) Get(c *fiber.Ctx) error {
 }
 
 func (h *Handler) Login(c *fiber.Ctx) error {
-	ctx := startTracing(c, "getData")
+	ctx := startTracing(c, "login")
 	defer endTracing(ctx)
 
 	authURL, state, err := h.useCase.Login(ctx)
@@ -74,7 +73,6 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 		return respondWithError(c, http.StatusInternalServerError, err.Error())
 	}
 	if authURL == nil {
-		// error 500 internal error
 		return respondWithError(c, http.StatusInternalServerError, "Cannot get Spotify auth url")
 	}
 
@@ -87,7 +85,7 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 }
 
 func (h *Handler) Callback(c *fiber.Ctx) error {
-	ctx := startTracing(c, "getData")
+	ctx := startTracing(c, "callback")
 	defer endTracing(ctx)
 
 	code := c.Query("code")
@@ -99,11 +97,12 @@ func (h *Handler) Callback(c *fiber.Ctx) error {
 		return err
 	}
 
-	if err := h.useCase.HandleCallback(ctx, code); err != nil {
+	user, err := h.useCase.HandleCallback(ctx, code)
+
+	if err != nil {
 		return respondWithError(c, http.StatusInternalServerError, err.Error())
 	}
-
-	return c.SendString("OK")
+	return c.Status(http.StatusOK).JSON(user)
 }
 
 func startTracing(c *fiber.Ctx, segmentName string) context.Context {
@@ -129,19 +128,6 @@ func validateOAuthCallback(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString("Invalid state parameter")
 	}
 	return nil
-}
-
-func fetchTopArtists(c *fiber.Ctx, client *spotify.Client) (*spotify.FullArtistPage, error) {
-	options := []spotify.RequestOption{
-		spotify.Timerange(spotify.LongTermRange),
-	}
-
-	topArtist, err := client.CurrentUsersTopArtists(c.Context(), options...)
-	if err != nil {
-		return nil, fiber.NewError(fiber.StatusNotFound, "No se pudieron obtener los top tracks")
-	}
-
-	return topArtist, nil
 }
 
 func formatResponse(status int, msg string) map[string]interface{} {

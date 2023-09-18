@@ -8,5 +8,5 @@ import (
 
 type Spec interface {
 	GetData(userId string, dataType string) (*models.Data, error)
-	Save(ctx context.Context, tasteReq models.DataRequest) (models.Data, error)
+	Save(ctx context.Context, dataReq *models.Data) (models.Data, error)
 }
