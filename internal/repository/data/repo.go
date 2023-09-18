@@ -2,6 +2,7 @@ package spotify
 
 import (
 	"context"
+	"time"
 
 	"github.com/chunnior/spotify/internal/models"
 	dynamodb "github.com/chunnior/spotify/pkg/aws/dynamodb"
@@ -21,8 +22,23 @@ func NewConfig(dynamoTable dynamodb.Client, cfg models.Config) Spec {
 	}
 }
 
-func (dr *DataRepo) Save(ctx context.Context, tasteReq models.DataRequest) (models.Data, error) {
-	return models.Data{}, nil
+func (dr *DataRepo) Save(ctx context.Context, dataReq *models.Data) (models.Data, error) {
+	now := time.Now()
+
+	// Si `CreatedAt` no ha sido establecido (es decir, es un nuevo objeto), entonces se asigna la fecha y hora actual.
+	if dataReq.CreatedAt.IsZero() {
+		dataReq.CreatedAt = now
+	}
+
+	// Independientemente de si es un nuevo objeto o una actualización, `UpdatedAt` siempre se establecerá a la hora actual.
+	dataReq.UpdatedAt = now
+
+	err := dr.dynamo.Save(dr.tableUserSpotify, dataReq)
+	if err != nil {
+		return models.Data{}, err
+	}
+
+	return *dataReq, nil
 }
 
 func (dr *DataRepo) GetData(userId string, dataType string) (*models.Data, error) {

@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/chunnior/spotify/internal/models"
-	spotifyAuth "github.com/zmb3/spotify/v2/auth"
+	"golang.org/x/oauth2"
 
 	"github.com/zmb3/spotify/v2"
 )
@@ -15,32 +15,54 @@ type Implementation struct {
 }
 
 func NewIntegration(cfg models.Config) Integration {
-
 	ctx := context.Background()
 
-	configCred := cfg.Spotify.GetSpotifyAuthConf()
-	token, err := configCred.Token(ctx)
+	token, err := cfg.Spotify.GetSpotifyAuthConf().Token(ctx)
 	if err != nil {
 		log.Fatalf("couldn't get token: %v", err)
 	}
 
-	httpClient := spotifyAuth.New().Client(ctx, token)
-	client := spotify.New(httpClient)
+	client := initializeSpotifyClient(ctx, token)
 
 	return &Implementation{
 		spotifyClient: client,
 	}
 }
 
-func (i *Implementation) GetTopTracks(ctx context.Context) ([]spotify.FullTrack, error) {
-
+func initializeSpotifyClient(ctx context.Context, token *oauth2.Token) *spotify.Client {
+	httpClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(token))
+	return spotify.New(httpClient)
+}
+func (i *Implementation) GetTopTracks(ctx context.Context, token *oauth2.Token) ([]spotify.FullTrack, error) {
+	client := initializeSpotifyClient(ctx, token)
 	options := []spotify.RequestOption{
 		spotify.Timerange(spotify.LongTermRange),
 	}
 
-	topTracks, err := i.spotifyClient.CurrentUsersTopTracks(ctx, options...)
+	topTracks, err := client.CurrentUsersTopTracks(ctx, options...)
 	if err != nil {
 		return nil, err
 	}
 	return topTracks.Tracks, nil
+}
+
+func (i *Implementation) GetTopArtists(ctx context.Context, token *oauth2.Token) ([]spotify.FullArtist, error) {
+	client := initializeSpotifyClient(ctx, token)
+	options := []spotify.RequestOption{
+		spotify.Timerange(spotify.LongTermRange),
+	}
+
+	topArtists, err := client.CurrentUsersTopArtists(ctx, options...)
+	if err != nil {
+		return nil, err
+	}
+	return topArtists.Artists, nil
+}
+
+func (i *Implementation) GetUserDetails(ctx context.Context) (*spotify.PrivateUser, error) {
+	user, err := i.spotifyClient.CurrentUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
