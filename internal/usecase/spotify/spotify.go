@@ -25,6 +25,7 @@ type Implementation struct {
 	extSpotify      external.Integration
 	spotifyAuthConf models.SpotifyAuthConf
 	cacheTokens     cache.Spec
+	CacheStates     cache.Spec
 }
 
 const (
@@ -40,6 +41,7 @@ func NewUseCase(spotifyAuthConf models.SpotifyAuthConf, repo configRepo.Spec, ex
 		extSpotify:      external,
 		spotifyAuthConf: spotifyAuthConf,
 		cacheTokens:     cache.NewMemoryCache(MemoryCache, CacheSize, CacheExpiry, true),
+		CacheStates:     cache.NewMemoryCache(MemoryCache, CacheSize, CacheExpiry, true),
 	}
 }
 
@@ -146,7 +148,8 @@ func (i *Implementation) Login(ctx context.Context) (*string, string, error) {
 	authURL := auth.AuthURL(state)
 	log.Info(authURL)
 
-	//TODO: persistir el state para validar que sea el mismo que el que se genero en el login
+	stateKey := fmt.Sprintf(`state-%s`, state)
+	go i.CacheStates.Save(ctx, stateKey, state)
 
 	return &authURL, state, nil
 }
@@ -164,8 +167,6 @@ func generateRandomState() (string, error) {
 }
 
 func (i *Implementation) HandleCallback(ctx context.Context, code string) (*spotify.PrivateUser, error) {
-
-	//TODO: Validar que el state sea el mismo que el que se genero en el login
 
 	auth := i.setupSpotifyAuth()
 

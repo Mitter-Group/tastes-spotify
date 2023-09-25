@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/newrelic/go-agent/v3/newrelic"
 
+	"github.com/chunnior/spotify/internal/handlers/middlewares"
 	"github.com/chunnior/spotify/internal/integration/external"
 	"github.com/chunnior/spotify/internal/models"
 	dataRepo "github.com/chunnior/spotify/internal/repository/data"
@@ -38,6 +39,6 @@ func InitRoutes(app *fiber.App, cfg models.Config, nrProvider *newrelic.Applicat
 	app.Get("/:dataType/:userId", handler.Get)
 
 	app.Get("/login", handler.Login)
-	app.Get("/callback", handler.Callback)
+	app.Get("/callback", middlewares.ValidateState(spotifyUseCase), handler.Callback)
 
 }
