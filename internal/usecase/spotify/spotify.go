@@ -202,6 +202,7 @@ func (i *Implementation) validateState(ctx context.Context, state string) error 
 	if state != value {
 		return errors.New("Invalid state parameter")
 	}
+	go i.cacheStates.Delete(ctx, stateKey)
 	return nil
 }
 
