@@ -1,16 +1,14 @@
 package handlers
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/newrelic/go-agent/v3/newrelic"
-
-	"github.com/chunnior/spotify/internal/handlers/middlewares"
 	"github.com/chunnior/spotify/internal/integration/external"
 	"github.com/chunnior/spotify/internal/models"
 	dataRepo "github.com/chunnior/spotify/internal/repository/data"
 	spotifyUC "github.com/chunnior/spotify/internal/usecase/spotify"
 	configAws "github.com/chunnior/spotify/pkg/aws"
 	"github.com/chunnior/spotify/pkg/aws/dynamodb"
+	"github.com/gofiber/fiber/v2"
+	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 // @title          Go template
@@ -39,6 +37,6 @@ func InitRoutes(app *fiber.App, cfg models.Config, nrProvider *newrelic.Applicat
 	app.Get("/:dataType/:userId", handler.Get)
 
 	app.Get("/login", handler.Login)
-	app.Get("/callback", middlewares.ValidateState(spotifyUseCase), handler.Callback)
+	app.Get("/callback", handler.Callback)
 
 }

@@ -93,11 +93,12 @@ func (h *Handler) Callback(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	if err := validateOAuthCallback(c); err != nil {
-		return err
+	state := c.Query("state")
+	if state == "" {
+		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	user, err := h.useCase.HandleCallback(ctx, code)
+	user, err := h.useCase.HandleCallback(ctx, code, state)
 
 	if err != nil {
 		return respondWithError(c, http.StatusInternalServerError, err.Error())
@@ -120,14 +121,6 @@ func endTracing(ctx context.Context) {
 func respondWithError(c *fiber.Ctx, status int, msg string) error {
 	log.ErrorfWithContext(c.Context(), msg)
 	return c.Status(status).JSON(formatResponse(status, msg))
-}
-
-func validateOAuthCallback(c *fiber.Ctx) error {
-	callbackState, storedState := c.Query("state"), c.Cookies("oauth_state")
-	if callbackState != storedState {
-		return c.Status(fiber.StatusBadRequest).SendString("Invalid state parameter")
-	}
-	return nil
 }
 
 func formatResponse(status int, msg string) map[string]interface{} {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -25,7 +26,7 @@ type Implementation struct {
 	extSpotify      external.Integration
 	spotifyAuthConf models.SpotifyAuthConf
 	cacheTokens     cache.Spec
-	CacheStates     cache.Spec
+	cacheStates     cache.Spec
 }
 
 const (
@@ -41,7 +42,7 @@ func NewUseCase(spotifyAuthConf models.SpotifyAuthConf, repo configRepo.Spec, ex
 		extSpotify:      external,
 		spotifyAuthConf: spotifyAuthConf,
 		cacheTokens:     cache.NewMemoryCache(MemoryCache, CacheSize, CacheExpiry, true),
-		CacheStates:     cache.NewMemoryCache(MemoryCache, CacheSize, CacheExpiry, true),
+		cacheStates:     cache.NewMemoryCache(MemoryCache, CacheSize, CacheExpiry, true),
 	}
 }
 
@@ -149,7 +150,7 @@ func (i *Implementation) Login(ctx context.Context) (*string, string, error) {
 	log.Info(authURL)
 
 	stateKey := fmt.Sprintf(`state-%s`, state)
-	go i.CacheStates.Save(ctx, stateKey, state)
+	go i.cacheStates.Save(ctx, stateKey, state)
 
 	return &authURL, state, nil
 }
@@ -166,7 +167,11 @@ func generateRandomState() (string, error) {
 	return hex.EncodeToString(buf), nil
 }
 
-func (i *Implementation) HandleCallback(ctx context.Context, code string) (*spotify.PrivateUser, error) {
+func (i *Implementation) HandleCallback(ctx context.Context, code string, state string) (*spotify.PrivateUser, error) {
+	err := i.validateState(ctx, state)
+	if err != nil {
+		return nil, err
+	}
 
 	auth := i.setupSpotifyAuth()
 
@@ -189,6 +194,15 @@ func (i *Implementation) HandleCallback(ctx context.Context, code string) (*spot
 
 	log.Info("Logged in as %s\n", user.DisplayName)
 	return user, nil
+}
+
+func (i *Implementation) validateState(ctx context.Context, state string) error {
+	stateKey := fmt.Sprintf(`state-%s`, state)
+	_, value := i.cacheStates.Get(ctx, stateKey)
+	if state != value {
+		return errors.New("Invalid state parameter")
+	}
+	return nil
 }
 
 func (i *Implementation) setupSpotifyAuth() *spotifyauth.Authenticator {
