@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -25,6 +26,7 @@ type Implementation struct {
 	extSpotify      external.Integration
 	spotifyAuthConf models.SpotifyAuthConf
 	cacheTokens     cache.Spec
+	cacheStates     cache.Spec
 }
 
 const (
@@ -40,6 +42,7 @@ func NewUseCase(spotifyAuthConf models.SpotifyAuthConf, repo configRepo.Spec, ex
 		extSpotify:      external,
 		spotifyAuthConf: spotifyAuthConf,
 		cacheTokens:     cache.NewMemoryCache(MemoryCache, CacheSize, CacheExpiry, true),
+		cacheStates:     cache.NewMemoryCache(MemoryCache, CacheSize, CacheExpiry, true),
 	}
 }
 
@@ -146,7 +149,8 @@ func (i *Implementation) Login(ctx context.Context) (*string, string, error) {
 	authURL := auth.AuthURL(state)
 	log.Info(authURL)
 
-	//TODO: persistir el state para validar que sea el mismo que el que se genero en el login
+	stateKey := fmt.Sprintf(`state-%s`, state)
+	go i.cacheStates.Save(ctx, stateKey, state)
 
 	return &authURL, state, nil
 }
@@ -163,9 +167,11 @@ func generateRandomState() (string, error) {
 	return hex.EncodeToString(buf), nil
 }
 
-func (i *Implementation) HandleCallback(ctx context.Context, code string) (*spotify.PrivateUser, error) {
-
-	//TODO: Validar que el state sea el mismo que el que se genero en el login
+func (i *Implementation) HandleCallback(ctx context.Context, code string, state string) (*spotify.PrivateUser, error) {
+	err := i.validateState(ctx, state)
+	if err != nil {
+		return nil, err
+	}
 
 	auth := i.setupSpotifyAuth()
 
@@ -188,6 +194,16 @@ func (i *Implementation) HandleCallback(ctx context.Context, code string) (*spot
 
 	log.Info("Logged in as %s\n", user.DisplayName)
 	return user, nil
+}
+
+func (i *Implementation) validateState(ctx context.Context, state string) error {
+	stateKey := fmt.Sprintf(`state-%s`, state)
+	_, value := i.cacheStates.Get(ctx, stateKey)
+	if state != value {
+		return errors.New("Invalid state parameter")
+	}
+	go i.cacheStates.Delete(ctx, stateKey)
+	return nil
 }
 
 func (i *Implementation) setupSpotifyAuth() *spotifyauth.Authenticator {

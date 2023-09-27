@@ -8,6 +8,7 @@ require (
 	github.com/gofiber/swagger v0.1.12
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/newrelic/go-agent/v3 v3.24.1
+	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggo/swag v1.16.1
 	github.com/tidwall/gjson v1.16.0
@@ -16,7 +17,7 @@ require (
 
 require (
 	github.com/gojek/valkyrie v0.0.0-20180215180059-6aee720afcdf // indirect
-	github.com/pkg/errors v0.9.1 // indirect
+	github.com/karlseguin/expect v1.0.8 // indirect
 )
 
 require (
@@ -55,7 +56,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.39
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.39
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.4.66
-	github.com/buaazp/fasthttprouter v0.1.1
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
@@ -70,7 +70,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.48.0 // indirect
+	github.com/valyala/fasthttp v1.48.0
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/zmb3/spotify/v2 v2.3.1
 	go.uber.org/multierr v1.10.0 // indirect
