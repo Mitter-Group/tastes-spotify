@@ -30,7 +30,7 @@ func InitRoutes(app *fiber.App, cfg models.Config, nrProvider *newrelic.Applicat
 
 	extSpotify := external.NewIntegration(cfg)
 
-	spotifyUseCase := spotifyUC.NewUseCase(cfg.Spotify, repository, extSpotify)
+	spotifyUseCase := spotifyUC.NewUseCase(cfg.App, cfg.Spotify, repository, extSpotify)
 
 	handler := NewHandler(spotifyUseCase)
 
