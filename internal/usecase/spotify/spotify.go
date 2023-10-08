@@ -100,9 +100,7 @@ func (i *Implementation) fetchData(
 		return nil, err
 	}
 
-	appConfig := i.appConfig.GetSpotifyAuthConf()
-
-	if data != nil && !i.hasExpired(data.UpdatedAt, appConfig.RefreshUserDataTTL) {
+	if data != nil && !i.hasExpired(data.UpdatedAt) {
 		log.Info("Data is updated")
 		return data, nil
 	}
@@ -143,9 +141,9 @@ func (i *Implementation) fetchData(
 	return dataToReturn, nil
 }
 
-func (i *Implementation) hasExpired(updatedAt time.Time, refreshUserDataTTL string) bool {
+func (i *Implementation) hasExpired(updatedAt time.Time) bool {
 	now := time.Now()
-	ttlDays, err := strconv.Atoi(refreshUserDataTTL)
+	ttlDays, err := strconv.Atoi(i.appConfig.RefreshUserDataTTL)
 	if err != nil {
 		log.Error("Error al convertir APP_REFRESH_USER_DATA_TTL a entero: %v", err)
 	}
