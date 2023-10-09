@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strconv"
+	"time"
 
 	"github.com/chunnior/spotify/internal/integration/external"
 	"github.com/chunnior/spotify/internal/models"
@@ -25,6 +27,7 @@ type Implementation struct {
 	repo            configRepo.Spec
 	extSpotify      external.Integration
 	spotifyAuthConf models.SpotifyAuthConf
+	appConfig       models.AppConfig
 	cacheTokens     cache.Spec
 	cacheStates     cache.Spec
 }
@@ -36,11 +39,12 @@ const (
 	CacheExpiry = 3540
 )
 
-func NewUseCase(spotifyAuthConf models.SpotifyAuthConf, repo configRepo.Spec, external external.Integration) *Implementation {
+func NewUseCase(appConfig models.AppConfig, spotifyAuthConf models.SpotifyAuthConf, repo configRepo.Spec, external external.Integration) *Implementation {
 	return &Implementation{
 		repo:            repo,
 		extSpotify:      external,
 		spotifyAuthConf: spotifyAuthConf,
+		appConfig:       appConfig,
 		cacheTokens:     cache.NewMemoryCache(MemoryCache, CacheSize, CacheExpiry, true),
 		cacheStates:     cache.NewMemoryCache(MemoryCache, CacheSize, CacheExpiry, true),
 	}
@@ -96,9 +100,8 @@ func (i *Implementation) fetchData(
 		return nil, err
 	}
 
-	// TODO: Verificar si los datos estan actualizados
-
-	if data != nil {
+	if data != nil && !i.hasExpired(data.UpdatedAt) {
+		log.Info("Data is updated")
 		return data, nil
 	}
 
@@ -136,6 +139,16 @@ func (i *Implementation) fetchData(
 	}()
 
 	return dataToReturn, nil
+}
+
+func (i *Implementation) hasExpired(updatedAt time.Time) bool {
+	now := time.Now()
+	ttlDays, err := strconv.Atoi(i.appConfig.RefreshUserDataTTL)
+	if err != nil {
+		log.Error("Error al convertir APP_REFRESH_USER_DATA_TTL a entero: %v", err)
+	}
+	expirationDate := updatedAt.Add(time.Duration(ttlDays) * 24 * time.Hour)
+	return now.After(expirationDate)
 }
 
 func (i *Implementation) Login(ctx context.Context) (*string, string, error) {
