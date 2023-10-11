@@ -40,6 +40,11 @@ variable "table_name" {
   type        = string
 }
 
+variable "user_data_table_name" {
+  description = "Name of the DynamoDB table"
+  type        = string
+}
+
 variable "billing_mode" {
   description = "Billing mode for the DynamoDB table"
   type        = string
@@ -53,5 +58,15 @@ variable "hash_key" {
 
 variable "range_key" {
   description = "Range key for the DynamoDB table"
+  type        = string
+}
+
+variable "backend_state_bucket" {
+  description = "Terraform state bucket"
+  type        = string
+}
+
+variable "backend_state_key" {
+  description = "Teraform state file key"
   type        = string
 }

@@ -1,6 +1,6 @@
 # resource "aws_s3_bucket" "beanstalk_app_bucket" {
 #   bucket = var.s3_bucket_name
-  
+
 #   tags = {
 #     Name        = "Beanstalk App Bucket"
 #     Environment = "Dev"
