@@ -33,7 +33,7 @@ func GetConfig(r *AWSCredentials, local bool) (aws.Config, error) {
 
 		return config.LoadDefaultConfig(context.TODO(),
 			config.WithRegion(r.Region),
-			config.WithSharedConfigProfile("personal"), //ESTO PORQUE TENGO DOS PROFILES EN MI .AWS/CONFIG
+			config.WithSharedConfigProfile("tastes-app"),
 		)
 
 	}
