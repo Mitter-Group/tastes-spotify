@@ -24,6 +24,7 @@ func InitRoutes(app *fiber.App, cfg models.Config, nrProvider *newrelic.Applicat
 
 	dynamo := dynamodb.NewDynamoClient(awsConfig,
 		dynamodb.WithTable(cfg.AWS.UserSpotifyData),
+		dynamodb.WithTable(cfg.AWS.SpotifyAuthUser),
 	)
 
 	repository := dataRepo.NewConfig(dynamo, cfg)

@@ -49,6 +49,16 @@ type Data struct {
 	DynamoDBMetadata `dynamodbav:",inline"`
 }
 
+type AuthUserData struct {
+	UserId           string      `json:"user_id" dynamodbav:"userID"`
+	SpotifyUserId    string      `json:"spotify_user_id"`
+	TokenType        string      `json:"token_type" example:"bearer"`
+	RefreshToken     string      `json:"refresh_token"`
+	TokenExpiration  time.Time   `json:"token_expiration"`
+	Data             DataDetails `json:"data"`
+	DynamoDBMetadata `dynamodbav:",inline"`
+}
+
 type DataDetails interface{}
 
 type TrackDetails struct {
