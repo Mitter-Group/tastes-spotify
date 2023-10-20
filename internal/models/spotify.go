@@ -51,7 +51,7 @@ type Data struct {
 
 type AuthUserData struct {
 	UserId           string      `json:"user_id" dynamodbav:"userID"`
-	SpotifyUserId    string      `json:"spotify_user_id"`
+	SpotifyUserId    string      `json:"spotify_user_id" dynamodbav:"spotifyUserID"`
 	TokenType        string      `json:"token_type" example:"bearer"`
 	RefreshToken     string      `json:"refresh_token"`
 	TokenExpiration  time.Time   `json:"token_expiration"`

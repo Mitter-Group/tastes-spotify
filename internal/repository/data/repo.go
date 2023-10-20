@@ -54,7 +54,7 @@ func (dr *DataRepo) SaveAuthUser(ctx context.Context, dataReq *models.AuthUserDa
 	// Independientemente de si es un nuevo objeto o una actualización, `UpdatedAt` siempre se establecerá a la hora actual.
 	dataReq.UpdatedAt = now
 
-	err := dr.dynamo.Save(dr.tableUserSpotify, dataReq)
+	err := dr.dynamo.Save(dr.tableSpotifyAuthUser, dataReq)
 	if err != nil {
 		return models.AuthUserData{}, err
 	}

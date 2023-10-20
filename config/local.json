@@ -20,7 +20,7 @@
     "spotify_auth_user": {
       "table_name": "SpotifyAuthUser",
       "primary_key_field": "userID",
-      "sort_key_field": "dataType"
+      "sort_key_field": "userID"
     }
   },
   "spotify_auth_conf": {
