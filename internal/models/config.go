@@ -27,5 +27,6 @@ type OAuthConfig struct {
 type AWS struct {
 	Credentials     configAws.AWSCredentials `json:"credentials"`
 	UserSpotifyData dynamodb.DynamoTable     `json:"user_spotify_data"`
+	SpotifyAuthUser dynamodb.DynamoTable     `json:"spotify_auth_user"`
 	LocalstackPort  string                   `json:"localstack_port"`
 }

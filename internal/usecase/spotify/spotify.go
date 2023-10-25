@@ -204,6 +204,8 @@ func (i *Implementation) HandleCallback(ctx context.Context, code string, state 
 	}
 
 	go i.cacheTokens.Save(ctx, user.ID, token)
+	//	TODO:	Obtener el ID de usuario del APP
+	go i.SaveAuthUser(user, token, "1")
 
 	log.Info("Logged in as %s\n", user.DisplayName)
 	return user, nil
@@ -235,6 +237,25 @@ func (i *Implementation) setupSpotifyAuth() *spotifyauth.Authenticator {
 		spotifyauth.WithClientID(spotifyAuthConf.ClientID),
 		spotifyauth.WithClientSecret(spotifyAuthConf.ClientSecret),
 	)
+}
+
+func (i *Implementation) SaveAuthUser(data *spotify.PrivateUser, token *oauth2.Token, userId string) {
+	authUser := i.mapAuthUserData(data, token, userId)
+	_, err := i.repo.SaveAuthUser(context.Background(), authUser)
+	if err != nil {
+		log.Errorf("[GET] Error al guardar los datos del usuario: %s", userId)
+	}
+}
+
+func (i *Implementation) mapAuthUserData(data *spotify.PrivateUser, token *oauth2.Token, userId string) *models.AuthUserData {
+	return &models.AuthUserData{
+		UserId:          userId,
+		SpotifyUserId:   data.ID,
+		TokenType:       token.TokenType,
+		RefreshToken:    token.RefreshToken,
+		TokenExpiration: token.Expiry,
+		Data:            *data,
+	}
 }
 
 func (i *Implementation) mapTrackData(data interface{}, userId string) *models.Data {
