@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -30,6 +31,13 @@ type Implementation struct {
 	appConfig       models.AppConfig
 	cacheTokens     cache.Spec
 	cacheStates     cache.Spec
+}
+
+type CustomUser struct {
+	*spotify.PrivateUser
+	Token        string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
+	TokenType    string `json:"token_type"`
 }
 
 const (
@@ -151,19 +159,20 @@ func (i *Implementation) hasExpired(updatedAt time.Time) bool {
 	return now.After(expirationDate)
 }
 
-func (i *Implementation) Login(ctx context.Context) (*string, string, error) {
+func (i *Implementation) Login(ctx context.Context, callbackUrl string) (*string, string, error) {
 	state, err := generateRandomState()
 	if err != nil {
 		return nil, "", err
 	}
-
-	auth := i.setupSpotifyAuth()
-
+	callbackURL := i.getCallbackUrl(callbackUrl)
+	auth := i.setupSpotifyAuth(callbackURL)
 	authURL := auth.AuthURL(state)
 	log.Info(authURL)
 
 	stateKey := fmt.Sprintf(`state-%s`, state)
+	stateUrlKey := fmt.Sprintf(`state-url-%s`, state)
 	go i.cacheStates.Save(ctx, stateKey, state)
+	go i.cacheStates.Save(ctx, stateUrlKey, callbackURL)
 
 	return &authURL, state, nil
 }
@@ -180,17 +189,20 @@ func generateRandomState() (string, error) {
 	return hex.EncodeToString(buf), nil
 }
 
-func (i *Implementation) HandleCallback(ctx context.Context, code string, state string) (*spotify.PrivateUser, error) {
-	err := i.validateState(ctx, state)
+func (i *Implementation) HandleCallback(ctx context.Context, code string, state string) (CustomUser, error) {
+	stateKey := fmt.Sprintf(`state-%s`, state)
+	stateUrlKey := fmt.Sprintf(`state-url-%s`, state)
+	err := i.validateState(ctx, state, stateKey)
 	if err != nil {
-		return nil, err
+		return CustomUser{}, err
 	}
-
-	auth := i.setupSpotifyAuth()
+	//	callbackURL := i.getCallbackUrl("")
+	callbackURL := i.getCallbackUrlFromCache(ctx, stateUrlKey)
+	auth := i.setupSpotifyAuth(callbackURL)
 
 	token, err := auth.Exchange(ctx, code)
 	if err != nil {
-		return nil, err
+		return CustomUser{}, err
 	}
 
 	log.Info("Token: ", token)
@@ -200,28 +212,59 @@ func (i *Implementation) HandleCallback(ctx context.Context, code string, state 
 
 	user, err := client.CurrentUser(ctx)
 	if err != nil {
-		return nil, err
+		return CustomUser{}, err
 	}
 
 	go i.cacheTokens.Save(ctx, user.ID, token)
 	//	TODO:	Obtener el ID de usuario del APP
-	go i.SaveAuthUser(user, token, "1")
+	go i.SaveAuthUser(user, token)
+
+	go i.cacheStates.Delete(ctx, stateKey)
+	go i.cacheStates.Delete(ctx, stateUrlKey)
 
 	log.Info("Logged in as %s\n", user.DisplayName)
-	return user, nil
+	customUser := CustomUser{
+		PrivateUser:  user,
+		Token:        token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		TokenType:    token.TokenType,
+	}
+	return customUser, nil
 }
 
-func (i *Implementation) validateState(ctx context.Context, state string) error {
-	stateKey := fmt.Sprintf(`state-%s`, state)
+func (i *Implementation) validateState(ctx context.Context, state string, stateKey string) error {
 	_, value := i.cacheStates.Get(ctx, stateKey)
 	if state != value {
 		return errors.New("Invalid state parameter")
 	}
-	go i.cacheStates.Delete(ctx, stateKey)
+
 	return nil
 }
 
-func (i *Implementation) setupSpotifyAuth() *spotifyauth.Authenticator {
+func (i *Implementation) getCallbackUrlFromCache(ctx context.Context, stateUrlKey string) string {
+	_, value := i.cacheStates.Get(ctx, stateUrlKey)
+	if value == nil {
+		return i.spotifyAuthConf.RedirectURI
+	}
+	go i.cacheStates.Delete(ctx, stateUrlKey)
+	return value.(string)
+}
+
+func (i *Implementation) getCallbackUrl(callbackUrl string) string {
+	if callbackUrl == "" {
+		callbackUrl = i.spotifyAuthConf.RedirectURI
+	}
+	redirectUrl, err := url.Parse(callbackUrl)
+	if err != nil {
+		log.Error(err)
+	}
+	q := redirectUrl.Query()
+	q.Set("provider", "spotify")
+	redirectUrl.RawQuery = q.Encode()
+	return redirectUrl.String()
+}
+
+func (i *Implementation) setupSpotifyAuth(callbackUrl string) *spotifyauth.Authenticator {
 	spotifyAuthConf := i.spotifyAuthConf.GetSpotifyAuthConf()
 
 	scopes := []string{
@@ -230,26 +273,39 @@ func (i *Implementation) setupSpotifyAuth() *spotifyauth.Authenticator {
 		spotifyauth.ScopeUserReadEmail,
 		spotifyauth.ScopeUserReadRecentlyPlayed,
 	}
+	/*
+		if callbackUrl == "" {
+			callbackUrl = i.spotifyAuthConf.RedirectURI
+		}
+		redirectUrl, err := url.Parse(callbackUrl)
+		if err != nil {
+			log.Error(err)
+		}
+		q := redirectUrl.Query()
+		q.Set("provider", "spotify")
+		redirectUrl.RawQuery = q.Encode()
+		callbackUrl = redirectUrl.String()
+	*/
 
-	return spotifyauth.New(
-		spotifyauth.WithRedirectURL(i.spotifyAuthConf.RedirectURI),
+	authenticator := spotifyauth.New(
+		spotifyauth.WithRedirectURL(callbackUrl),
 		spotifyauth.WithScopes(scopes...),
 		spotifyauth.WithClientID(spotifyAuthConf.ClientID),
 		spotifyauth.WithClientSecret(spotifyAuthConf.ClientSecret),
 	)
+	return authenticator
 }
 
-func (i *Implementation) SaveAuthUser(data *spotify.PrivateUser, token *oauth2.Token, userId string) {
-	authUser := i.mapAuthUserData(data, token, userId)
+func (i *Implementation) SaveAuthUser(data *spotify.PrivateUser, token *oauth2.Token) {
+	authUser := i.mapAuthUserData(data, token)
 	_, err := i.repo.SaveAuthUser(context.Background(), authUser)
 	if err != nil {
-		log.Errorf("[GET] Error al guardar los datos del usuario: %s", userId)
+		log.Errorf("[GET] Error al guardar los datos del usuario: %s", data.ID)
 	}
 }
 
-func (i *Implementation) mapAuthUserData(data *spotify.PrivateUser, token *oauth2.Token, userId string) *models.AuthUserData {
+func (i *Implementation) mapAuthUserData(data *spotify.PrivateUser, token *oauth2.Token) *models.AuthUserData {
 	return &models.AuthUserData{
-		UserId:          userId,
 		SpotifyUserId:   data.ID,
 		TokenType:       token.TokenType,
 		RefreshToken:    token.RefreshToken,

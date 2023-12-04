@@ -68,7 +68,12 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 	ctx := startTracing(c, "login")
 	defer endTracing(ctx)
 
-	authURL, state, err := h.useCase.Login(ctx)
+	callbackUrl := c.Query("callback_url")
+	if callbackUrl == "" {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	authURL, state, err := h.useCase.Login(ctx, callbackUrl)
 	if err != nil {
 		return respondWithError(c, http.StatusInternalServerError, err.Error())
 	}
