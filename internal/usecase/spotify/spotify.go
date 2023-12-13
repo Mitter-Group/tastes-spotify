@@ -35,7 +35,7 @@ type Implementation struct {
 
 type CustomUser struct {
 	*spotify.PrivateUser
-	Token        string `json:"token"`
+	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	TokenType    string `json:"token_type"`
 }
@@ -225,7 +225,7 @@ func (i *Implementation) HandleCallback(ctx context.Context, code string, state 
 	log.Info("Logged in as %s\n", user.DisplayName)
 	customUser := CustomUser{
 		PrivateUser:  user,
-		Token:        token.AccessToken,
+		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,
 		TokenType:    token.TokenType,
 	}
@@ -370,13 +370,14 @@ func (i *Implementation) mapArtistData(data interface{}, userId string) *models.
 	}
 }
 
+// TODO: Revisar interacción entre cache y dynamo
 func (i *Implementation) getTokenFromCache(ctx context.Context, userId string) (*oauth2.Token, error) {
 
 	//si estamos en local devolver un mock
 	if util.IsLocal(util.GetEnvironment()) {
 		return &oauth2.Token{
 			//nolint:lll
-			AccessToken: "BQCvOZkUP7K77vMU7YgaSMJOD5Pr2_omud-_gdeC1VzNUqkA-iWYQEBHg-eDJz1fE0Qe2XgVb6lkUK44NshXq_uBa-F42wbKxHI_qHJNwAVWuWdGDP0yXzGvXc8BPoWcluxyHO_yEjL0EsiiCmYTy108PZT6XfsrxGbBtBLBSTIN43czvnLHPv8qK2KIjTa8EvZu1GqNcwKiQ9qYxYkb2oHnORXKDrRK4A",
+			AccessToken: "BQAKWQias6Pf1KFNb02kjcQkpxxdO9iRcS1vNf2zPnXUP1wM4xv8fexFLBtJxJxMS0CVcZ0UNF3mRpvKlkhtqKYmXdMVt6ERyRphAWp8mL9qMQBFYMBOfghzVpXn4Ld4URW9ZEtxT8a0S0eYojLHGoDBjqMe6XqUFTIsfgnHNmRm0bjC0gDU4IE3zTvHKbQuHq610H_LY5qWW3-IzavoliZK8A",
 			TokenType:   "Bearer",
 		}, nil
 	}
