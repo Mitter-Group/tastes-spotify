@@ -14,7 +14,6 @@ import (
 	"github.com/chunnior/spotify/internal/integration/external"
 	"github.com/chunnior/spotify/internal/models"
 	configRepo "github.com/chunnior/spotify/internal/repository/data"
-	"github.com/chunnior/spotify/internal/util"
 	"github.com/chunnior/spotify/internal/util/log"
 	"github.com/chunnior/spotify/pkg/aws/dynamodb"
 	"github.com/chunnior/spotify/pkg/cache"
@@ -35,9 +34,6 @@ type Implementation struct {
 
 type CustomUser struct {
 	*spotify.PrivateUser
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	TokenType    string `json:"token_type"`
 }
 
 const (
@@ -101,25 +97,33 @@ func (i *Implementation) fetchData(
 	apiFunc interface{},
 	mapFunc func(interface{}, string) *models.Data,
 ) (*models.Data, error) {
-
-	// intenta obtener los datos de la base de datos
+	var token *oauth2.Token
+	// Intenta obtener los datos de la base de datos (sin consultar al API de Spotify)
 	data, err := i.repo.GetData(userId, dataType)
 	if err != nil && err != dynamodb.ErrNotFound {
 		return nil, err
 	}
-
 	if data != nil && !i.hasExpired(data.UpdatedAt) {
 		log.Info("Data is updated")
 		return data, nil
 	}
-
-	// obtiene el token del cache
-	token, err := i.getTokenFromCache(ctx, userId)
+	// Si no hay datos en la base de datos o si los datos han expirado, intenta obtener el token del cache
+	token, err = i.getTokenFromCache(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: si el token no existe en el cache, buscar uno nuevo con el refresh token
+	if token == nil {
+		authUser, err := i.repo.GetAuthUser(userId)
+		if err != nil {
+			return nil, err
+		}
+		oldToken := authUser.Token
+		token, err = i.renewToken(ctx, oldToken)
+		if err != nil {
+			return nil, err
+		}
+		//	TODO: guardar el token nuevo en la base de datos y en cache
+	}
 
 	// verifica que api usara y lo ejecuta
 	var apiData interface{}
@@ -189,20 +193,20 @@ func generateRandomState() (string, error) {
 	return hex.EncodeToString(buf), nil
 }
 
-func (i *Implementation) HandleCallback(ctx context.Context, code string, state string) (CustomUser, error) {
+func (i *Implementation) HandleCallback(ctx context.Context, code string, state string) (*spotify.PrivateUser, error) {
 	stateKey := fmt.Sprintf(`state-%s`, state)
 	stateUrlKey := fmt.Sprintf(`state-url-%s`, state)
 	err := i.validateState(ctx, state, stateKey)
 	if err != nil {
-		return CustomUser{}, err
+		return nil, err
 	}
-	//	callbackURL := i.getCallbackUrl("")
+
 	callbackURL := i.getCallbackUrlFromCache(ctx, stateUrlKey)
 	auth := i.setupSpotifyAuth(callbackURL)
 
 	token, err := auth.Exchange(ctx, code)
 	if err != nil {
-		return CustomUser{}, err
+		return nil, err
 	}
 
 	log.Info("Token: ", token)
@@ -212,24 +216,18 @@ func (i *Implementation) HandleCallback(ctx context.Context, code string, state 
 
 	user, err := client.CurrentUser(ctx)
 	if err != nil {
-		return CustomUser{}, err
+		return nil, err
 	}
-
-	go i.cacheTokens.Save(ctx, user.ID, token)
-	//	TODO:	Obtener el ID de usuario del APP
+	newExpiry := token.Expiry.Add(15 * time.Minute)
+	duration := newExpiry.Sub(time.Now())
+	go i.cacheTokens.SaveWithTTL(ctx, user.ID, token, duration)
 	go i.SaveAuthUser(user, token)
 
 	go i.cacheStates.Delete(ctx, stateKey)
 	go i.cacheStates.Delete(ctx, stateUrlKey)
 
 	log.Info("Logged in as %s\n", user.DisplayName)
-	customUser := CustomUser{
-		PrivateUser:  user,
-		AccessToken:  token.AccessToken,
-		RefreshToken: token.RefreshToken,
-		TokenType:    token.TokenType,
-	}
-	return customUser, nil
+	return user, nil
 }
 
 func (i *Implementation) validateState(ctx context.Context, state string, stateKey string) error {
@@ -273,19 +271,6 @@ func (i *Implementation) setupSpotifyAuth(callbackUrl string) *spotifyauth.Authe
 		spotifyauth.ScopeUserReadEmail,
 		spotifyauth.ScopeUserReadRecentlyPlayed,
 	}
-	/*
-		if callbackUrl == "" {
-			callbackUrl = i.spotifyAuthConf.RedirectURI
-		}
-		redirectUrl, err := url.Parse(callbackUrl)
-		if err != nil {
-			log.Error(err)
-		}
-		q := redirectUrl.Query()
-		q.Set("provider", "spotify")
-		redirectUrl.RawQuery = q.Encode()
-		callbackUrl = redirectUrl.String()
-	*/
 
 	authenticator := spotifyauth.New(
 		spotifyauth.WithRedirectURL(callbackUrl),
@@ -306,11 +291,9 @@ func (i *Implementation) SaveAuthUser(data *spotify.PrivateUser, token *oauth2.T
 
 func (i *Implementation) mapAuthUserData(data *spotify.PrivateUser, token *oauth2.Token) *models.AuthUserData {
 	return &models.AuthUserData{
-		SpotifyUserId:   data.ID,
-		TokenType:       token.TokenType,
-		RefreshToken:    token.RefreshToken,
-		TokenExpiration: token.Expiry,
-		Data:            *data,
+		UserId: data.ID,
+		Token:  token,
+		Data:   *data,
 	}
 }
 
@@ -370,27 +353,38 @@ func (i *Implementation) mapArtistData(data interface{}, userId string) *models.
 	}
 }
 
-// TODO: Revisar interacción entre cache y dynamo
 func (i *Implementation) getTokenFromCache(ctx context.Context, userId string) (*oauth2.Token, error) {
-
-	//si estamos en local devolver un mock
-	if util.IsLocal(util.GetEnvironment()) {
-		return &oauth2.Token{
-			//nolint:lll
-			AccessToken: "BQAKWQias6Pf1KFNb02kjcQkpxxdO9iRcS1vNf2zPnXUP1wM4xv8fexFLBtJxJxMS0CVcZ0UNF3mRpvKlkhtqKYmXdMVt6ERyRphAWp8mL9qMQBFYMBOfghzVpXn4Ld4URW9ZEtxT8a0S0eYojLHGoDBjqMe6XqUFTIsfgnHNmRm0bjC0gDU4IE3zTvHKbQuHq610H_LY5qWW3-IzavoliZK8A",
-			TokenType:   "Bearer",
-		}, nil
-	}
+	/*
+		//si estamos en local devolver un mock
+		if util.IsLocal(util.GetEnvironment()) {
+			return &oauth2.Token{
+				//nolint:lll
+				AccessToken: "BQAKWQias6Pf1KFNb02kjcQkpxxdO9iRcS1vNf2zPnXUP1wM4xv8fexFLBtJxJxMS0CVcZ0UNF3mRpvKlkhtqKYmXdMVt6ERyRphAWp8mL9qMQBFYMBOfghzVpXn4Ld4URW9ZEtxT8a0S0eYojLHGoDBjqMe6XqUFTIsfgnHNmRm0bjC0gDU4IE3zTvHKbQuHq610H_LY5qWW3-IzavoliZK8A",
+				TokenType:   "Bearer",
+			}, nil
+		}
+	*/
 	_, value := i.cacheTokens.Get(ctx, userId)
 
 	if value == nil {
-		return nil, fmt.Errorf("token not found in cache or expired for user: %s", userId)
+		fmt.Printf("token not found in cache for user: %s", userId)
+		return nil, nil
 	}
 
 	validToken, ok := value.(*oauth2.Token)
 	if !ok {
 		return nil, fmt.Errorf("cached value is not a valid oauth2 token for user: %s", userId)
 	}
-
 	return validToken, nil
+}
+
+func (i *Implementation) renewToken(ctx context.Context, token *oauth2.Token) (*oauth2.Token, error) {
+	conf := &oauth2.Config{}
+	src := conf.TokenSource(ctx, token)
+	newToken, err := src.Token()
+	if err != nil {
+		log.Error("Error renovando el token: %v", err)
+		return nil, fmt.Errorf("No se pudo renovar el token")
+	}
+	return newToken, nil
 }

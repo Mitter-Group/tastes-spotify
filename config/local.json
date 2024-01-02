@@ -29,6 +29,6 @@
     "redirect_uri": "http://localhost:8080/callback"
   },
   "app_conf": {
-    "refresh_user_data_ttl":"90"
+    "refresh_user_data_ttl":"7"
   }
 }

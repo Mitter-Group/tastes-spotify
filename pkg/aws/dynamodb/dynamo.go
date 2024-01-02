@@ -176,10 +176,12 @@ func (i *Implementation) BatchGetItem(key map[string]types.KeysAndAttributes, va
 }
 
 func (i *Implementation) GetOne(table string, partitionKey string, bindTo interface{}) error {
-	log.Debugf("[DynamoDB] executing get query")
+	log.Debugf("[DynamoDB] executing get query with [pk:%s]", partitionKey)
+	tData := i.DynamoTables[table]
+	log.Debugf("[DynamoDB] table data: %s", tData.PartitionKeyField)
 	return i.getItem(table,
 		map[string]types.AttributeValue{
-			i.DynamoTables[table].PartitionKeyField: &types.AttributeValueMemberS{Value: partitionKey},
+			tData.PartitionKeyField: &types.AttributeValueMemberS{Value: partitionKey},
 		},
 		bindTo)
 }

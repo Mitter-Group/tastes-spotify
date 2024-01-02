@@ -6,6 +6,7 @@ import (
 	"time"
 
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
@@ -50,12 +51,9 @@ type Data struct {
 }
 
 type AuthUserData struct {
-	//	UserId           string      `json:"user_id" dynamodbav:"userID"`
-	SpotifyUserId    string      `json:"spotify_user_id" dynamodbav:"spotifyUserID"`
-	TokenType        string      `json:"token_type" example:"bearer"`
-	RefreshToken     string      `json:"refresh_token"`
-	TokenExpiration  time.Time   `json:"token_expiration"`
-	Data             DataDetails `json:"data"`
+	UserId           string        `json:"user_id" dynamodbav:"userID"`
+	Token            *oauth2.Token `json:"token" dynamodbav:"token"`
+	Data             DataDetails   `json:"data" dynamodbav:"Data"`
 	DynamoDBMetadata `dynamodbav:",inline"`
 }
 

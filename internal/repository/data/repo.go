@@ -73,3 +73,15 @@ func (dr *DataRepo) GetData(userId string, dataType string) (*models.Data, error
 
 	return data, nil
 }
+
+func (dr *DataRepo) GetAuthUser(userID string) (*models.AuthUserData, error) {
+
+	var data *models.AuthUserData
+
+	err := dr.dynamo.GetOne(dr.tableSpotifyAuthUser, userID, &data)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
