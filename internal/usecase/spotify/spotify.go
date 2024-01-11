@@ -39,8 +39,8 @@ type CustomUser struct {
 const (
 	Spotify     = "SPOTIFY"
 	MemoryCache = "tokens"
-	CacheSize   = 2000
-	CacheExpiry = 3540
+	CacheSize   = 2000 // 2000 items
+	CacheExpiry = 3540 // 59 minutos
 )
 
 func NewUseCase(appConfig models.AppConfig, spotifyAuthConf models.SpotifyAuthConf, repo configRepo.Spec, external external.Integration) *Implementation {
@@ -103,7 +103,7 @@ func (i *Implementation) fetchData(
 	if err != nil && err != dynamodb.ErrNotFound {
 		return nil, err
 	}
-	if data != nil && !i.hasExpired(data.UpdatedAt) {
+	if data != nil && !i.dataHasExpired(data.UpdatedAt) {
 		log.Info("Data is updated")
 		return data, nil
 	}
@@ -123,6 +123,10 @@ func (i *Implementation) fetchData(
 			return nil, err
 		}
 		//	TODO: guardar el token nuevo en la base de datos y en cache
+		newExpiry := token.Expiry.Add(15 * time.Minute)
+		duration := newExpiry.Sub(time.Now())
+		go i.cacheTokens.SaveWithTTL(ctx, authUser.UserId, token, duration)
+		go i.SaveAuthUser(authUser.Data, token)
 	}
 
 	// verifica que api usara y lo ejecuta
@@ -153,7 +157,7 @@ func (i *Implementation) fetchData(
 	return dataToReturn, nil
 }
 
-func (i *Implementation) hasExpired(updatedAt time.Time) bool {
+func (i *Implementation) dataHasExpired(updatedAt time.Time) bool {
 	now := time.Now()
 	ttlDays, err := strconv.Atoi(i.appConfig.RefreshUserDataTTL)
 	if err != nil {
@@ -293,7 +297,7 @@ func (i *Implementation) mapAuthUserData(data *spotify.PrivateUser, token *oauth
 	return &models.AuthUserData{
 		UserId: data.ID,
 		Token:  token,
-		Data:   *data,
+		Data:   data,
 	}
 }
 
