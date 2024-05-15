@@ -122,7 +122,6 @@ func (i *Implementation) fetchData(
 		if err != nil {
 			return nil, err
 		}
-		//	TODO: guardar el token nuevo en la base de datos y en cache
 		newExpiry := token.Expiry.Add(15 * time.Minute)
 		duration := newExpiry.Sub(time.Now())
 		go i.cacheTokens.SaveWithTTL(ctx, authUser.UserId, token, duration)
