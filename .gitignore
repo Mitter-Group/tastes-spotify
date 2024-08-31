@@ -36,3 +36,4 @@ darwin_arm64/
 *~
 *.tmp
 .DS_Store
+cmd/__debug_*

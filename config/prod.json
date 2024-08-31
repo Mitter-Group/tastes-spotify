@@ -5,5 +5,29 @@
     "client_id": "xxxx",
     "client_secret_key": "ENV_SECRET_KEY",
     "token_url": "https://spotify-develop.us.auth0.com/oauth/token"
+  },
+  "aws":{
+    "localstack_port": "4566",
+    "credentials": {
+      "region": "us-west-1"
+    },
+    "user_spotify_data": {
+      "table_name": "UserSpotifyData",
+      "primary_key_field": "userID",
+      "sort_key_field": "dataType"
+    },
+    "spotify_auth_user": {
+      "table_name": "SpotifyAuthUser",
+      "primary_key_field": "userID",
+      "sort_key_field": "userID"
+    }
+  },
+  "spotify_auth_conf": {
+    "client_id":"SPOTIFY_CLIENT_ID",
+    "client_secret": "SPOTIFY_SECRET",
+    "redirect_uri": "http://localhost:8080/callback"
+  },
+  "app_conf": {
+    "refresh_user_data_ttl":"7"
   }
 }
