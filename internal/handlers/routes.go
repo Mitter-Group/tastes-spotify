@@ -20,7 +20,8 @@ import (
 // @BasePath       /
 func InitRoutes(app *fiber.App, cfg models.Config, nrProvider *newrelic.Application) {
 
-	awsConfig, _ := configAws.GetConfig(&cfg.AWS.Credentials, cfg.Env == "local")
+	// fmt.Println("Env: ", cfg.Env)
+	awsConfig, _ := configAws.GetConfig(&cfg.AWS.Credentials, cfg.Env)
 
 	dynamo := dynamodb.NewDynamoClient(awsConfig,
 		dynamodb.WithTable(cfg.AWS.UserSpotifyData),

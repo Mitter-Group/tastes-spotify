@@ -37,3 +37,7 @@ darwin_arm64/
 *.tmp
 .DS_Store
 cmd/__debug_*
+
+.env.dev
+.env.local
+.env.prod

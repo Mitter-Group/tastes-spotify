@@ -289,6 +289,7 @@ func (i *Implementation) SaveAuthUser(data *spotify.PrivateUser, token *oauth2.T
 	_, err := i.repo.SaveAuthUser(context.Background(), authUser)
 	if err != nil {
 		log.Errorf("[GET] Error al guardar los datos del usuario: %s", data.ID)
+		log.Error(err)
 	}
 }
 
