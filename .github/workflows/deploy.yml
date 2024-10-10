@@ -1,0 +1,43 @@
+name: Build Docker Image for SPOTIFY
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'develop' }}
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.20
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@master # Ex: v2.1.0, See the latest version at https://github.com/marketplace/actions/sonarcloud-scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Build the Docker image
+        run: |
+          docker build -t tastes-users:latest .
+      - name: Log in to Amazon ECR
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 340544373363.dkr.ecr.us-west-1.amazonaws.com
+      - name: Tag Docker image for ECR
+        run: |
+          docker tag tastes-users:latest 340544373363.dkr.ecr.us-west-1.amazonaws.com/tastes-dev-spotify-repo
+      - name: Push Docker image to ECR
+        run: |
+          docker push 340544373363.dkr.ecr.us-west-1.amazonaws.com/tastes-dev-spotify-repo
