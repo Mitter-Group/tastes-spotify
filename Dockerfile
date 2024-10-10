@@ -11,7 +11,7 @@ RUN go mod download
 COPY . .
 
 # Compila el ejecutable. Ajusta el comando según tu estructura de directorios y nombre de archivo.
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o user-service ./cmd/api/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o spotify-service ./cmd/api/main.go
 
 # Etapa de ejecución
 FROM alpine:latest  
