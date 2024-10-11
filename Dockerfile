@@ -22,6 +22,9 @@ WORKDIR /root/
 # Copia el ejecutable de la etapa de compilación
 COPY --from=builder /app/spotify-service .
 
+# Copia la carpeta de configuración al contenedor
+COPY --from=builder /app/config ./config
+
 # Expone el puerto que tu aplicación utiliza
 EXPOSE 8082
 
